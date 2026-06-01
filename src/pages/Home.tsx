@@ -90,7 +90,7 @@ export default function Home() {
 
         {/* Main content */}
         <div className="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 pt-36 pb-0 w-full">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 items-end">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 items-center">
 
             {/* Left: headline */}
             <div className="lg:col-span-7 pb-16 lg:pb-20">
@@ -152,8 +152,8 @@ export default function Home() {
             </div>
 
             {/* Right: bear mascot panel */}
-            <div className="hidden lg:flex lg:col-span-5 justify-center items-end pb-0 pr-10">
-              <div className="relative w-full max-w-[260px]">
+            <div className="hidden lg:flex lg:col-span-5 justify-center items-center py-16 pr-10">
+              <div className="relative w-full max-w-[240px]">
 
                 {/* Outer yellow frame with angular cut */}
                 <div
