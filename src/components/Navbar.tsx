@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import Button from './Button';
-import bearImg from '../assets/bw_bear.png';
 
 const navLinks = [
   { label: 'Home', to: '/' },
@@ -64,12 +63,13 @@ export default function Navbar() {
           <div className="flex items-center justify-between h-16 md:h-18">
 
             {/* Logo */}
-            <Link to="/" className="flex items-center group shrink-0">
-              <img
-                src={bearImg}
-                alt="Killer Bees Clinton"
-                className="h-12 md:h-14 w-auto object-contain"
-              />
+            <Link to="/" className="flex items-center gap-0 group shrink-0">
+              <div className="h-12 md:h-14 bg-white flex items-center px-3 py-1">
+                <span className="font-display text-gym-black uppercase leading-none text-sm md:text-base">Killer Bees</span>
+              </div>
+              <div className="bg-gym-red px-3 h-12 md:h-14 flex items-center">
+                <span className="font-display text-white uppercase tracking-wider text-sm md:text-base leading-none">Clinton</span>
+              </div>
             </Link>
 
             {/* Desktop nav */}
