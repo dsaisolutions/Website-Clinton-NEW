@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import Button from './Button';
+import bearImg from '../assets/bw_bear.png';
 
 const navLinks = [
   { label: 'Home', to: '/' },
@@ -62,29 +63,13 @@ export default function Navbar() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 md:h-18">
 
-            {/* Logo — place logo.png in /public/ for this to display */}
-            <Link to="/" className="flex items-center gap-0 group shrink-0">
-              <div className="h-12 md:h-14 bg-white flex items-center px-2 py-1">
-                {/* Replace src with /logo.png once file is in public/ */}
-                <img
-                  src="/logo.png"
-                  alt="Killer Bees Clinton"
-                  className="h-full w-auto object-contain max-w-[160px]"
-                  onError={(e) => {
-                    (e.currentTarget as HTMLImageElement).style.display = 'none';
-                    (e.currentTarget.nextElementSibling as HTMLElement).style.display = 'flex';
-                  }}
-                />
-                {/* Fallback if logo not present */}
-                <div className="hidden items-center gap-1 px-1">
-                  <div className="font-display text-gym-black leading-none text-sm uppercase">
-                    <span className="block">Killer Bees</span>
-                  </div>
-                </div>
-              </div>
-              <div className="bg-gym-red px-3 h-12 md:h-14 flex items-center">
-                <span className="font-display text-white uppercase tracking-wider text-sm md:text-base leading-none">Clinton</span>
-              </div>
+            {/* Logo */}
+            <Link to="/" className="flex items-center group shrink-0">
+              <img
+                src={bearImg}
+                alt="Killer Bees Clinton"
+                className="h-12 md:h-14 w-auto object-contain"
+              />
             </Link>
 
             {/* Desktop nav */}

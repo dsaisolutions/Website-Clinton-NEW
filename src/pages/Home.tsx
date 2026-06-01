@@ -55,31 +55,6 @@ export default function Home() {
           </span>
         </div>
 
-        {/* Diagonal slash across hero — desktop only */}
-        <div
-          className="absolute top-0 right-0 w-2/5 h-full pointer-events-none hidden lg:block"
-          style={{
-            background: 'linear-gradient(180deg, #131313 0%, #1E1E1E 100%)',
-            clipPath: 'polygon(18% 0, 100% 0, 100% 100%, 0% 100%)',
-          }}
-        />
-
-        {/* Red vertical stripe — desktop only */}
-        <div className="absolute right-0 top-0 bottom-0 w-1.5 bg-gym-red hidden lg:block" />
-
-        {/* Yellow diagonal slash accent — desktop only */}
-        <div
-          className="absolute pointer-events-none hidden lg:block"
-          style={{
-            top: 0,
-            right: '38%',
-            bottom: 0,
-            width: '6px',
-            background: '#F5C400',
-            transform: 'skewX(-4deg)',
-          }}
-        />
-
         {/* Mobile: red left border accent */}
         <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gym-red lg:hidden" />
 
