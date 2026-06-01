@@ -1,6 +1,7 @@
 import { MapPin } from 'lucide-react';
 import Button from '../components/Button';
 import CTASection from '../components/CTASection';
+import bearImg from '../assets/bw_bear.png';
 
 const disciplines = [
   {
@@ -144,7 +145,7 @@ export default function Home() {
                   {/* Yellow bg + bear image — multiply makes white bg vanish, grays go amber */}
                   <div className="bg-bee-yellow relative">
                     <img
-                      src="/bw_bear.png"
+                      src={bearImg}
                       alt="Killer Bees Clinton mascot"
                       className="w-full h-auto block"
                       style={{
