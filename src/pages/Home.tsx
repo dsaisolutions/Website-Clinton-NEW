@@ -37,7 +37,10 @@ export default function Home() {
   return (
     <>
       {/* ─── HERO ─────────────────────────────────────────────────────── */}
-      <section className="relative min-h-screen bg-gym-black overflow-hidden flex flex-col justify-end">
+      <section className="relative min-h-screen bg-gym-black flex flex-col justify-end">
+
+        {/* Clip container for background decorations only */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
 
         {/* Giant background text watermark */}
         <div
@@ -83,8 +86,10 @@ export default function Home() {
         {/* Mobile: yellow bottom strip */}
         <div className="absolute bottom-0 left-0 right-0 h-1 bg-bee-yellow lg:hidden" />
 
+        </div>{/* end decoration clip wrapper */}
+
         {/* Main content */}
-        <div className="relative max-w-7xl mx-auto px-6 sm:px-6 lg:px-8 pt-36 pb-0 w-full">
+        <div className="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 pt-36 pb-0 w-full">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 items-end">
 
             {/* Left: headline */}
@@ -147,8 +152,8 @@ export default function Home() {
             </div>
 
             {/* Right: bear mascot panel */}
-            <div className="hidden lg:flex lg:col-span-5 justify-center items-end pb-0 pl-8">
-              <div className="relative w-full max-w-xs">
+            <div className="hidden lg:flex lg:col-span-5 justify-center items-end pb-0 pr-10">
+              <div className="relative w-full max-w-[260px]">
 
                 {/* Outer yellow frame with angular cut */}
                 <div
