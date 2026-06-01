@@ -37,41 +37,59 @@ export default function Home() {
   return (
     <>
       {/* ─── HERO ─────────────────────────────────────────────────────── */}
-      <section className="relative min-h-screen bg-gym-black flex flex-col justify-end">
+      <section className="relative bg-gym-black flex flex-col" style={{ minHeight: '100svh' }}>
 
-        {/* Clip container for background decorations only */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-
-        {/* Giant background text watermark */}
-        <div
-          className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden"
-          aria-hidden="true"
-        >
-          <span
-            className="font-display text-stroke-yellow opacity-[0.04] leading-none whitespace-nowrap"
-            style={{ fontSize: 'clamp(140px, 22vw, 320px)' }}
+        {/* Background layer */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+          {/* Diagonal stripe texture — right half only */}
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage: `repeating-linear-gradient(
+                -55deg,
+                transparent 0px,
+                transparent 28px,
+                rgba(245,196,0,0.022) 28px,
+                rgba(245,196,0,0.022) 30px
+              )`,
+            }}
+          />
+          {/* Large ghost watermark — anchored center-right so it bridges both columns */}
+          <div
+            className="absolute select-none"
+            style={{
+              right: '-4%',
+              top: '50%',
+              transform: 'translateY(-52%)',
+              fontSize: 'clamp(180px, 28vw, 420px)',
+              fontFamily: '"Bebas Neue", sans-serif',
+              lineHeight: 1,
+              WebkitTextStroke: '2px rgba(245,196,0,0.055)',
+              color: 'transparent',
+              whiteSpace: 'nowrap',
+              letterSpacing: '0.02em',
+              pointerEvents: 'none',
+              userSelect: 'none',
+            }}
           >
-            CLINTON
-          </span>
+            BEES
+          </div>
+          {/* Red left rail — always visible */}
+          <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gym-red" />
         </div>
 
-        {/* Mobile: red left border accent */}
-        <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gym-red lg:hidden" />
+        {/* ── Main two-column content ── */}
+        <div
+          className="relative flex-1 flex flex-col justify-center w-full mx-auto px-6 sm:px-10 lg:px-14"
+          style={{ maxWidth: '1220px', paddingTop: 'clamp(5.5rem, 12vh, 8rem)', paddingBottom: 'clamp(2rem, 5vh, 4rem)' }}
+        >
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-x-12 xl:gap-x-16 items-center">
 
-        {/* Mobile: yellow bottom strip */}
-        <div className="absolute bottom-0 left-0 right-0 h-1 bg-bee-yellow lg:hidden" />
+            {/* ── LEFT: Text ── */}
+            <div className="flex flex-col">
 
-        </div>{/* end decoration clip wrapper */}
-
-        {/* Main content */}
-        <div className="relative max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 pt-36 pb-0 w-full">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 items-center">
-
-            {/* Left: headline */}
-            <div className="lg:col-span-7 pb-16 lg:pb-20">
-
-              {/* Location stamp */}
-              <div className="inline-flex items-center gap-0 mb-8 overflow-hidden">
+              {/* Location + discipline tags */}
+              <div className="inline-flex items-center gap-0 mb-7 self-start overflow-hidden">
                 <div className="bg-gym-red px-4 py-1.5">
                   <span className="font-heading text-white text-xs uppercase tracking-[0.3em] font-bold">Clinton, MS</span>
                 </div>
@@ -83,103 +101,119 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Headline stack */}
-              <div className="mb-8">
+              {/* Headline */}
+              <div className="mb-7">
                 <div
                   className="font-display uppercase leading-none text-white text-shadow-hard block"
-                  style={{ fontSize: 'clamp(3rem, 9vw, 8.5rem)' }}
+                  style={{ fontSize: 'clamp(3.4rem, 8vw, 7.5rem)' }}
                 >
                   Train Hard.
                 </div>
                 <div
                   className="font-display uppercase leading-none text-bee-yellow text-shadow-yellow block"
-                  style={{ fontSize: 'clamp(3rem, 9vw, 8.5rem)' }}
+                  style={{ fontSize: 'clamp(3.4rem, 8vw, 7.5rem)' }}
                 >
                   Stay Sharp.
                 </div>
                 <div
                   className="font-display uppercase leading-none text-white text-shadow-hard block"
-                  style={{ fontSize: 'clamp(3rem, 9vw, 8.5rem)' }}
+                  style={{ fontSize: 'clamp(3.4rem, 8vw, 7.5rem)' }}
                 >
                   Join the Hive.
                 </div>
               </div>
 
-              {/* Discipline tags — mobile replaces the line, desktop hides (bear panel has them) */}
-              <div className="flex items-center gap-3 mb-6 lg:hidden">
-                {['Jiu Jitsu', 'MMA', 'Wrestling'].map((d, i) => (
-                  <div key={d} className="flex items-center gap-3">
-                    {i > 0 && <span className="w-px h-3 bg-bee-yellow/40" />}
-                    <span className="font-heading text-xs uppercase tracking-widest text-gray-400">{d}</span>
-                  </div>
-                ))}
-              </div>
-
-              <p className="font-body text-gray-300 text-lg md:text-xl leading-relaxed max-w-xl mb-10">
+              <p className="font-body text-gray-300 text-lg md:text-xl leading-relaxed mb-9" style={{ maxWidth: '38ch' }}>
                 Jiu Jitsu, MMA, and Wrestling in Clinton, Mississippi.
                 All levels. Real coaching. No shortcuts.
               </p>
 
-              <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex flex-col sm:flex-row gap-4 mb-10 lg:mb-0">
                 <Button to="/calendar" variant="primary" size="lg">View Schedule</Button>
                 <Button to="/contact" variant="outline" size="lg">Contact Us</Button>
               </div>
             </div>
 
-            {/* Right: bear mascot panel */}
-            <div className="hidden lg:flex lg:col-span-5 justify-center items-center py-16 pr-10">
-              <div className="relative w-full max-w-[240px]">
+            {/* ── RIGHT: Bear card ── */}
+            <div className="flex justify-center lg:justify-end items-center">
+              {/* Card outer wrapper — positions the bolt corners and shadow */}
+              <div
+                className="relative"
+                style={{ width: 'clamp(220px, 26vw, 320px)' }}
+              >
+                {/* Drop shadow stack — layered offset rects for poster effect */}
+                <div className="absolute inset-0 translate-x-3 translate-y-3 bg-gym-red opacity-40" style={{ clipPath: 'polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 0 100%)' }} />
+                <div className="absolute inset-0 translate-x-1.5 translate-y-1.5 bg-bee-yellow opacity-25" style={{ clipPath: 'polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 0 100%)' }} />
 
-                {/* Outer yellow frame with angular cut */}
+                {/* Main card */}
                 <div
-                  className="relative border-4 border-gym-black overflow-hidden"
-                  style={{ clipPath: 'polygon(0 0, calc(100% - 28px) 0, 100% 28px, 100% 100%, 0 100%)' }}
+                  className="relative overflow-hidden border-2 border-bee-yellow"
+                  style={{ clipPath: 'polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 0 100%)' }}
                 >
-                  {/* Red top stripe */}
-                  <div className="absolute top-0 left-0 right-0 h-2 bg-gym-red z-10" />
+                  {/* Red top accent bar */}
+                  <div className="absolute top-0 left-0 right-0 h-1.5 bg-gym-red z-20" />
 
-                  {/* Dark bg so bear stays crisp; yellow tint only from the frame */}
-                  <div className="bg-gym-black relative">
+                  {/* Diagonal stripe texture behind bear */}
+                  <div
+                    className="absolute inset-0 z-0"
+                    style={{
+                      background: '#0d0d0d',
+                      backgroundImage: `repeating-linear-gradient(
+                        -45deg,
+                        transparent 0px,
+                        transparent 10px,
+                        rgba(245,196,0,0.04) 10px,
+                        rgba(245,196,0,0.04) 11px
+                      )`,
+                    }}
+                  />
+
+                  {/* Bear image */}
+                  <div className="relative z-10">
                     <img
                       src={bearImg}
                       alt="Killer Bees Clinton mascot"
                       className="w-full h-auto block"
-                      style={{
-                        filter: 'contrast(1.15) brightness(1.05)',
-                        display: 'block',
-                      }}
+                      style={{ filter: 'contrast(1.2) brightness(1.05)' }}
                     />
-
-                    {/* Subtle yellow vignette bottom — ties it to the brand without washing it out */}
+                    {/* Yellow glow at bottom of bear */}
                     <div
-                      className="absolute bottom-0 left-0 right-0 h-16 pointer-events-none"
-                      style={{
-                        background: 'linear-gradient(to top, rgba(245,196,0,0.12) 0%, transparent 100%)',
-                      }}
+                      className="absolute bottom-0 left-0 right-0 h-20 pointer-events-none z-10"
+                      style={{ background: 'linear-gradient(to top, rgba(245,196,0,0.18) 0%, transparent 100%)' }}
                     />
                   </div>
 
-                  {/* CLINTON nameplate */}
-                  <div className="bg-gym-black border-t-2 border-bee-yellow/60 py-3 px-4 flex items-center justify-between gap-3">
-                    <div className="h-px flex-1 bg-bee-yellow/30" />
-                    <span className="font-display text-bee-yellow uppercase tracking-[0.45em] text-2xl leading-none">
-                      Clinton
-                    </span>
-                    <div className="h-px flex-1 bg-bee-yellow/30" />
+                  {/* Nameplate */}
+                  <div className="relative z-10 bg-gym-black border-t-2 border-bee-yellow py-2.5 px-4 flex items-center gap-3">
+                    <div className="h-px flex-1 bg-bee-yellow/40" />
+                    <span className="font-display text-bee-yellow uppercase tracking-[0.5em] text-xl leading-none">Clinton</span>
+                    <div className="h-px flex-1 bg-bee-yellow/40" />
+                  </div>
+
+                  {/* Sport tags below nameplate */}
+                  <div className="relative z-10 bg-gym-black border-t border-gym-charcoal-light px-4 py-2 flex items-center justify-center gap-3">
+                    {['BJJ', 'MMA', 'WR'].map((tag, i) => (
+                      <div key={tag} className="flex items-center gap-3">
+                        {i > 0 && <span className="w-px h-3 bg-bee-yellow/30" />}
+                        <span className="font-heading text-bee-yellow/70 text-xs uppercase tracking-widest">{tag}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
 
-                {/* Corner bolts */}
-                <div className="absolute -top-2 -left-2 w-4 h-4 bg-gym-red" />
-                <div className="absolute -top-2 -right-2 w-4 h-4 bg-bee-yellow" />
+                {/* Corner bolt accents */}
+                <div className="absolute -top-1.5 -left-1.5 w-3.5 h-3.5 bg-gym-red z-30" />
+                <div className="absolute -bottom-1.5 -left-1.5 w-3.5 h-3.5 bg-bee-yellow z-30" />
+                <div className="absolute -bottom-1.5 -right-1.5 w-3.5 h-3.5 bg-gym-red z-30" />
               </div>
             </div>
+
           </div>
         </div>
 
         {/* Bottom scoreboard bar */}
         <div className="relative bg-bee-yellow">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="w-full mx-auto px-6 sm:px-10 lg:px-14" style={{ maxWidth: '1220px' }}>
             <div className="flex flex-col sm:flex-row items-center justify-between py-3 gap-2">
               <div className="flex items-center gap-6 divide-x divide-bee-yellow-dark">
                 {['Jiu Jitsu', 'MMA', 'Wrestling'].map((d) => (
