@@ -52,21 +52,21 @@ export default function Home() {
           </span>
         </div>
 
-        {/* Diagonal slash across hero */}
+        {/* Diagonal slash across hero — desktop only */}
         <div
-          className="absolute top-0 right-0 w-2/5 h-full pointer-events-none"
+          className="absolute top-0 right-0 w-2/5 h-full pointer-events-none hidden lg:block"
           style={{
             background: 'linear-gradient(180deg, #131313 0%, #1E1E1E 100%)',
             clipPath: 'polygon(18% 0, 100% 0, 100% 100%, 0% 100%)',
           }}
         />
 
-        {/* Red vertical stripe */}
-        <div className="absolute right-0 top-0 bottom-0 w-1.5 bg-gym-red" />
+        {/* Red vertical stripe — desktop only */}
+        <div className="absolute right-0 top-0 bottom-0 w-1.5 bg-gym-red hidden lg:block" />
 
-        {/* Yellow diagonal slash accent */}
+        {/* Yellow diagonal slash accent — desktop only */}
         <div
-          className="absolute pointer-events-none"
+          className="absolute pointer-events-none hidden lg:block"
           style={{
             top: 0,
             right: '38%',
@@ -77,8 +77,14 @@ export default function Home() {
           }}
         />
 
+        {/* Mobile: red left border accent */}
+        <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gym-red lg:hidden" />
+
+        {/* Mobile: yellow bottom strip */}
+        <div className="absolute bottom-0 left-0 right-0 h-1 bg-bee-yellow lg:hidden" />
+
         {/* Main content */}
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-40 pb-0 w-full">
+        <div className="relative max-w-7xl mx-auto px-6 sm:px-6 lg:px-8 pt-36 pb-0 w-full">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 items-end">
 
             {/* Left: headline */}
@@ -101,22 +107,32 @@ export default function Home() {
               <div className="mb-8">
                 <div
                   className="font-display uppercase leading-none text-white text-shadow-hard block"
-                  style={{ fontSize: 'clamp(3.5rem, 9vw, 8.5rem)' }}
+                  style={{ fontSize: 'clamp(3rem, 9vw, 8.5rem)' }}
                 >
                   Train Hard.
                 </div>
                 <div
                   className="font-display uppercase leading-none text-bee-yellow text-shadow-yellow block"
-                  style={{ fontSize: 'clamp(3.5rem, 9vw, 8.5rem)' }}
+                  style={{ fontSize: 'clamp(3rem, 9vw, 8.5rem)' }}
                 >
                   Stay Sharp.
                 </div>
                 <div
                   className="font-display uppercase leading-none text-white text-shadow-hard block"
-                  style={{ fontSize: 'clamp(3.5rem, 9vw, 8.5rem)' }}
+                  style={{ fontSize: 'clamp(3rem, 9vw, 8.5rem)' }}
                 >
                   Join the Hive.
                 </div>
+              </div>
+
+              {/* Discipline tags — mobile replaces the line, desktop hides (bear panel has them) */}
+              <div className="flex items-center gap-3 mb-6 lg:hidden">
+                {['Jiu Jitsu', 'MMA', 'Wrestling'].map((d, i) => (
+                  <div key={d} className="flex items-center gap-3">
+                    {i > 0 && <span className="w-px h-3 bg-bee-yellow/40" />}
+                    <span className="font-heading text-xs uppercase tracking-widest text-gray-400">{d}</span>
+                  </div>
+                ))}
               </div>
 
               <p className="font-body text-gray-300 text-lg md:text-xl leading-relaxed max-w-xl mb-10">
