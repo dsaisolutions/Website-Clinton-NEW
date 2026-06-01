@@ -50,10 +50,10 @@ export default function Navbar() {
 
       {/* Main nav */}
       <header
-        className={`fixed top-8 left-0 right-0 z-40 transition-all duration-200 ${
+        className={`fixed top-8 left-0 right-0 z-40 transition-all duration-200 border-b-2 border-bee-yellow/40 ${
           scrolled
-            ? 'bg-gym-black/98 backdrop-blur-sm border-b-2 border-bee-yellow/40'
-            : 'bg-gym-black/70'
+            ? 'bg-gym-black/98 backdrop-blur-sm shadow-lg shadow-black/60'
+            : 'bg-gym-black/70 shadow-md shadow-black/40'
         }`}
       >
         {/* Left red accent bar */}
