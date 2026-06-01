@@ -142,24 +142,23 @@ export default function Home() {
                   {/* Red top stripe */}
                   <div className="absolute top-0 left-0 right-0 h-2 bg-gym-red z-10" />
 
-                  {/* Yellow bg + bear image — multiply makes white bg vanish, grays go amber */}
-                  <div className="bg-bee-yellow relative">
+                  {/* Dark bg so bear stays crisp; yellow tint only from the frame */}
+                  <div className="bg-gym-black relative">
                     <img
                       src={bearImg}
                       alt="Killer Bees Clinton mascot"
                       className="w-full h-auto block"
                       style={{
-                        mixBlendMode: 'multiply',
-                        filter: 'contrast(1.2) brightness(0.88) saturate(1.1)',
+                        filter: 'contrast(1.15) brightness(1.05)',
                         display: 'block',
                       }}
                     />
 
-                    {/* Red diagonal slash accent over lower-right of bear */}
+                    {/* Subtle yellow vignette bottom — ties it to the brand without washing it out */}
                     <div
-                      className="absolute bottom-0 right-0 w-24 h-24 pointer-events-none"
+                      className="absolute bottom-0 left-0 right-0 h-16 pointer-events-none"
                       style={{
-                        background: 'linear-gradient(135deg, transparent 50%, rgba(196,30,30,0.18) 50%)',
+                        background: 'linear-gradient(to top, rgba(245,196,0,0.12) 0%, transparent 100%)',
                       }}
                     />
                   </div>
