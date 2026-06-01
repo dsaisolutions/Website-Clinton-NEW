@@ -180,29 +180,18 @@ export default function Home() {
                   </div>
 
                   {/* CLINTON nameplate */}
-                  <div className="bg-gym-black py-3 px-4 flex items-center justify-between gap-3">
-                    <div className="h-px flex-1 bg-bee-yellow/40" />
+                  <div className="bg-gym-black border-t-2 border-bee-yellow/60 py-3 px-4 flex items-center justify-between gap-3">
+                    <div className="h-px flex-1 bg-bee-yellow/30" />
                     <span className="font-display text-bee-yellow uppercase tracking-[0.45em] text-2xl leading-none">
                       Clinton
                     </span>
-                    <div className="h-px flex-1 bg-bee-yellow/40" />
+                    <div className="h-px flex-1 bg-bee-yellow/30" />
                   </div>
                 </div>
 
-                {/* Corner bolts — site's angular language */}
+                {/* Corner bolts */}
                 <div className="absolute -top-2 -left-2 w-4 h-4 bg-gym-red" />
-                <div className="absolute -bottom-2 -left-2 w-4 h-4 bg-bee-yellow" />
-                <div className="absolute -bottom-2 -right-2 w-4 h-4 bg-bee-yellow" />
-
-                {/* Discipline tags below panel */}
-                <div className="mt-4 flex flex-col gap-1.5">
-                  {['Jiu Jitsu', 'MMA', 'Wrestling'].map((d) => (
-                    <div key={d} className="flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 bg-bee-yellow shrink-0" />
-                      <span className="font-heading text-xs uppercase tracking-widest text-gray-400">{d}</span>
-                    </div>
-                  ))}
-                </div>
+                <div className="absolute -top-2 -right-2 w-4 h-4 bg-bee-yellow" />
               </div>
             </div>
           </div>
