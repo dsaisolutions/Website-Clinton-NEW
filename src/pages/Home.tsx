@@ -127,10 +127,13 @@ export default function Home() {
 
             {/* ── RIGHT: Branded logo unit ── */}
             <div className="flex justify-center items-center mt-10 lg:mt-0">
-              <div className="flex flex-col items-center" style={{ width: '100%', maxWidth: '320px' }}>
+              <div
+                className="flex flex-col items-center lg:-translate-x-[60px]"
+                style={{ width: '100%', maxWidth: '333px' }}
+              >
 
                 {/* KILLER BEES — badge title above card */}
-                <div className="w-full flex items-center gap-2 mb-1.5">
+                <div className="w-full flex items-center gap-2 mb-0">
                   <div className="h-px flex-1 bg-bee-yellow/45" />
                   <span
                     className="font-display uppercase leading-none select-none whitespace-nowrap"
