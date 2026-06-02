@@ -111,22 +111,49 @@ export default function Home() {
 
               {/* School badge — centered under headline */}
               <div className="flex justify-center mb-5">
-                <img
-                  src="/src/assets/313420056_580715700507484_3157916469398511501_n.jpg"
-                  alt="American Killer Bees"
-                  className="rounded-full pointer-events-none select-none"
+                <div
+                  className="flex flex-col items-center gap-2 px-5 py-4"
                   style={{
-                    width: 'clamp(96px, 13vw, 160px)',
-                    height: 'clamp(96px, 13vw, 160px)',
-                    objectFit: 'cover',
-                    mixBlendMode: 'luminosity',
-                    opacity: 0.88,
-                    filter: 'brightness(1.05) drop-shadow(0 0 10px rgba(245,196,0,0.45))',
-                    outline: '2px solid rgba(245,196,0,0.45)',
-                    outlineOffset: '3px',
+                    background: 'linear-gradient(160deg, #111 0%, #0a0a0a 100%)',
+                    border: '1px solid rgba(245,196,0,0.55)',
+                    boxShadow: '0 0 0 1px rgba(220,38,38,0.2) inset, 0 4px 24px rgba(0,0,0,0.6)',
+                    minWidth: 'clamp(140px, 18vw, 200px)',
                   }}
-                  onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
-                />
+                >
+                  {/* Corner accents */}
+                  <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-gym-red" style={{ position: 'static', alignSelf: 'stretch', display: 'contents' }} />
+
+                  <span
+                    className="font-display uppercase tracking-widest text-bee-yellow"
+                    style={{ fontSize: 'clamp(0.6rem, 1vw, 0.75rem)', letterSpacing: '0.3em' }}
+                  >
+                    Killer Bees
+                  </span>
+
+                  <img
+                    src="/src/assets/313420056_580715700507484_3157916469398511501_n.jpg"
+                    alt="American Killer Bees"
+                    className="rounded-full pointer-events-none select-none"
+                    style={{
+                      width: 'clamp(72px, 10vw, 112px)',
+                      height: 'clamp(72px, 10vw, 112px)',
+                      objectFit: 'cover',
+                      mixBlendMode: 'luminosity',
+                      opacity: 0.9,
+                      filter: 'brightness(1.08) drop-shadow(0 0 8px rgba(245,196,0,0.4))',
+                      outline: '1.5px solid rgba(245,196,0,0.5)',
+                      outlineOffset: '2px',
+                    }}
+                    onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                  />
+
+                  <span
+                    className="font-display uppercase tracking-widest text-white/60"
+                    style={{ fontSize: 'clamp(0.55rem, 0.9vw, 0.68rem)', letterSpacing: '0.28em' }}
+                  >
+                    Mississippi
+                  </span>
+                </div>
               </div>
 
               {/* Thin yellow rule — visual connector */}
