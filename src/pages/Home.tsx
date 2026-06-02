@@ -50,47 +50,11 @@ export default function Home() {
                 -55deg,
                 transparent 0px,
                 transparent 24px,
-                rgba(245,196,0,0.018) 24px,
-                rgba(245,196,0,0.018) 25px
+                rgba(245,196,0,0.016) 24px,
+                rgba(245,196,0,0.016) 25px
               )`,
             }}
           />
-
-          {/*
-            KILLER / BEES stacked watermark — centered across the full hero width.
-            Two lines so both words are readable.
-            Left side sits behind the headline (very faint), right side is slightly
-            more opaque so it shows near the logo card.
-          */}
-          <div
-            className="absolute inset-0 flex flex-col items-center justify-center select-none"
-            style={{ gap: 0 }}
-          >
-            {/* Gradient mask: dark on the left (behind text), lighter on right (near logo) */}
-            <div
-              className="absolute inset-0"
-              style={{
-                background: 'linear-gradient(to right, rgba(8,8,8,0.55) 0%, rgba(8,8,8,0.1) 55%, rgba(8,8,8,0) 100%)',
-                zIndex: 2,
-              }}
-            />
-            {['KILLER', 'BEES'].map((word) => (
-              <span
-                key={word}
-                className="font-display leading-none block"
-                style={{
-                  fontSize: 'clamp(120px, 21vw, 340px)',
-                  letterSpacing: '0.06em',
-                  WebkitTextStroke: '2px rgba(196,158,0,0.13)',
-                  color: 'rgba(196,158,0,0.04)',
-                  zIndex: 1,
-                  lineHeight: 0.88,
-                }}
-              >
-                {word}
-              </span>
-            ))}
-          </div>
 
           {/* Red left rail */}
           <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gym-red" />
@@ -160,93 +124,128 @@ export default function Home() {
 
             {/* ── RIGHT: Bear fight-poster card ── */}
             <div className="flex justify-center lg:justify-start items-center">
-              <div className="relative" style={{ width: '100%', maxWidth: '300px' }}>
+              <div className="flex flex-col items-center gap-0" style={{ width: '100%', maxWidth: '300px' }}>
 
-                {/* Layered offset shadows — red deep, yellow mid */}
+                {/* KILLER — above the card */}
                 <div
-                  className="absolute bg-gym-red"
+                  className="font-display uppercase leading-none tracking-widest select-none w-full text-center"
                   style={{
-                    inset: 0,
-                    transform: 'translate(6px, 7px)',
-                    opacity: 0.45,
-                    clipPath: 'polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 0 100%)',
+                    fontSize: 'clamp(1.6rem, 3.2vw, 2.6rem)',
+                    letterSpacing: '0.22em',
+                    color: 'transparent',
+                    WebkitTextStroke: '1.5px #F5C400',
+                    marginBottom: '6px',
+                    opacity: 0.9,
                   }}
-                />
-                <div
-                  className="absolute bg-bee-yellow"
-                  style={{
-                    inset: 0,
-                    transform: 'translate(3px, 3.5px)',
-                    opacity: 0.3,
-                    clipPath: 'polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 0 100%)',
-                  }}
-                />
-
-                {/* Card face */}
-                <div
-                  className="relative overflow-hidden border-2 border-bee-yellow"
-                  style={{ clipPath: 'polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 0 100%)' }}
                 >
-                  {/* Red top accent — 3px for crispness */}
-                  <div className="absolute top-0 left-0 right-0 z-20" style={{ height: '3px', background: '#C41E1E' }} />
+                  KILLER
+                </div>
 
-                  {/* Card body background with diagonal stripe texture */}
+                {/* Card wrapper */}
+                <div className="relative w-full">
+
+                  {/* Layered offset shadows — red deep, yellow mid */}
                   <div
-                    className="absolute inset-0 z-0"
+                    className="absolute bg-gym-red"
                     style={{
-                      background: '#0c0c0c',
-                      backgroundImage: `repeating-linear-gradient(
-                        -45deg,
-                        transparent 0px,
-                        transparent 9px,
-                        rgba(245,196,0,0.035) 9px,
-                        rgba(245,196,0,0.035) 10px
-                      )`,
+                      inset: 0,
+                      transform: 'translate(6px, 7px)',
+                      opacity: 0.45,
+                      clipPath: 'polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 0 100%)',
+                    }}
+                  />
+                  <div
+                    className="absolute bg-bee-yellow"
+                    style={{
+                      inset: 0,
+                      transform: 'translate(3px, 3.5px)',
+                      opacity: 0.3,
+                      clipPath: 'polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 0 100%)',
                     }}
                   />
 
-                  {/* Bear image */}
-                  <div className="relative z-10">
-                    <img
-                      src={bearImg}
-                      alt="Killer Bees Clinton mascot"
-                      className="w-full h-auto block"
-                      style={{ filter: 'contrast(1.18) brightness(1.04)', display: 'block' }}
-                    />
-                    {/* Yellow glow at bear's feet — brand warmth */}
+                  {/* Card face */}
+                  <div
+                    className="relative overflow-hidden border-2 border-bee-yellow"
+                    style={{ clipPath: 'polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 0 100%)' }}
+                  >
+                    {/* Red top accent */}
+                    <div className="absolute top-0 left-0 right-0 z-20" style={{ height: '3px', background: '#C41E1E' }} />
+
+                    {/* Card body background with diagonal stripe texture */}
                     <div
-                      className="absolute bottom-0 left-0 right-0 pointer-events-none z-10"
+                      className="absolute inset-0 z-0"
                       style={{
-                        height: '35%',
-                        background: 'linear-gradient(to top, rgba(245,196,0,0.16) 0%, transparent 100%)',
+                        background: '#0c0c0c',
+                        backgroundImage: `repeating-linear-gradient(
+                          -45deg,
+                          transparent 0px,
+                          transparent 9px,
+                          rgba(245,196,0,0.035) 9px,
+                          rgba(245,196,0,0.035) 10px
+                        )`,
                       }}
                     />
+
+                    {/* Bear image */}
+                    <div className="relative z-10">
+                      <img
+                        src={bearImg}
+                        alt="Killer Bees Clinton mascot"
+                        className="w-full h-auto block"
+                        style={{ filter: 'contrast(1.18) brightness(1.04)', display: 'block' }}
+                      />
+                      {/* Yellow glow at bear's feet */}
+                      <div
+                        className="absolute bottom-0 left-0 right-0 pointer-events-none z-10"
+                        style={{
+                          height: '35%',
+                          background: 'linear-gradient(to top, rgba(245,196,0,0.16) 0%, transparent 100%)',
+                        }}
+                      />
+                    </div>
+
+                    {/* Nameplate */}
+                    <div className="relative z-10 bg-gym-black border-t-2 border-bee-yellow flex items-center gap-3 px-4 py-2.5">
+                      <div className="h-px flex-1 bg-bee-yellow/35" />
+                      <span className="font-display text-bee-yellow uppercase tracking-[0.5em] leading-none" style={{ fontSize: 'clamp(1.1rem, 2.2vw, 1.35rem)' }}>
+                        Clinton
+                      </span>
+                      <div className="h-px flex-1 bg-bee-yellow/35" />
+                    </div>
+
+                    {/* Sport tag row */}
+                    <div className="relative z-10 bg-gym-black border-t border-gym-charcoal-light px-4 py-2 flex items-center justify-center gap-3">
+                      {['BJJ', 'MMA', 'WR'].map((tag, i) => (
+                        <div key={tag} className="flex items-center gap-3">
+                          {i > 0 && <span className="w-px h-3 bg-bee-yellow/25" />}
+                          <span className="font-heading text-bee-yellow/65 uppercase tracking-widest" style={{ fontSize: '0.65rem' }}>{tag}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
 
-                  {/* Nameplate */}
-                  <div className="relative z-10 bg-gym-black border-t-2 border-bee-yellow flex items-center gap-3 px-4 py-2.5">
-                    <div className="h-px flex-1 bg-bee-yellow/35" />
-                    <span className="font-display text-bee-yellow uppercase tracking-[0.5em] leading-none" style={{ fontSize: 'clamp(1.1rem, 2.2vw, 1.35rem)' }}>
-                      Clinton
-                    </span>
-                    <div className="h-px flex-1 bg-bee-yellow/35" />
-                  </div>
-
-                  {/* Sport tag row */}
-                  <div className="relative z-10 bg-gym-black border-t border-gym-charcoal-light px-4 py-2 flex items-center justify-center gap-3">
-                    {['BJJ', 'MMA', 'WR'].map((tag, i) => (
-                      <div key={tag} className="flex items-center gap-3">
-                        {i > 0 && <span className="w-px h-3 bg-bee-yellow/25" />}
-                        <span className="font-heading text-bee-yellow/65 uppercase tracking-widest" style={{ fontSize: '0.65rem' }}>{tag}</span>
-                      </div>
-                    ))}
-                  </div>
+                  {/* Corner bolt accents */}
+                  <div className="absolute z-30" style={{ top: '-5px', left: '-5px', width: '12px', height: '12px', background: '#C41E1E' }} />
+                  <div className="absolute z-30" style={{ bottom: '-5px', left: '-5px', width: '12px', height: '12px', background: '#F5C400' }} />
+                  <div className="absolute z-30" style={{ bottom: '-5px', right: '-5px', width: '12px', height: '12px', background: '#C41E1E' }} />
                 </div>
 
-                {/* Corner bolt accents */}
-                <div className="absolute z-30" style={{ top: '-5px', left: '-5px', width: '12px', height: '12px', background: '#C41E1E' }} />
-                <div className="absolute z-30" style={{ bottom: '-5px', left: '-5px', width: '12px', height: '12px', background: '#F5C400' }} />
-                <div className="absolute z-30" style={{ bottom: '-5px', right: '-5px', width: '12px', height: '12px', background: '#C41E1E' }} />
+                {/* BEES — below the card */}
+                <div
+                  className="font-display uppercase leading-none tracking-widest select-none w-full text-center"
+                  style={{
+                    fontSize: 'clamp(1.6rem, 3.2vw, 2.6rem)',
+                    letterSpacing: '0.22em',
+                    color: 'transparent',
+                    WebkitTextStroke: '1.5px #C41E1E',
+                    marginTop: '8px',
+                    opacity: 0.85,
+                  }}
+                >
+                  BEES
+                </div>
+
               </div>
             </div>
 
