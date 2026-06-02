@@ -1,4 +1,5 @@
 import { MapPin } from 'lucide-react';
+import killerBeesLogo from '../assets/313420056_580715700507484_3157916469398511501_n.jpg';
 import Button from '../components/Button';
 import CTASection from '../components/CTASection';
 import bearImg from '../assets/bw_bear.png';
@@ -88,7 +89,7 @@ export default function Home() {
               </div>
 
               {/* Headline — three lines, white / yellow / white */}
-              <div className="mb-5" style={{ lineHeight: 0.92 }}>
+              <div className="mb-6" style={{ lineHeight: 0.92 }}>
                 <div
                   className="font-display uppercase block text-white"
                   style={{ fontSize: 'clamp(3.2rem, 7.8vw, 7.2rem)', lineHeight: 0.92 }}
@@ -106,53 +107,6 @@ export default function Home() {
                   style={{ fontSize: 'clamp(3.2rem, 7.8vw, 7.2rem)', lineHeight: 0.92 }}
                 >
                   Join the Hive.
-                </div>
-              </div>
-
-              {/* School badge — centered under headline */}
-              <div className="flex justify-center mb-5">
-                <div
-                  className="flex flex-col items-center gap-2 px-5 py-4"
-                  style={{
-                    background: 'linear-gradient(160deg, #111 0%, #0a0a0a 100%)',
-                    border: '1px solid rgba(245,196,0,0.55)',
-                    boxShadow: '0 0 0 1px rgba(220,38,38,0.2) inset, 0 4px 24px rgba(0,0,0,0.6)',
-                    minWidth: 'clamp(140px, 18vw, 200px)',
-                  }}
-                >
-                  {/* Corner accents */}
-                  <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-gym-red" style={{ position: 'static', alignSelf: 'stretch', display: 'contents' }} />
-
-                  <span
-                    className="font-display uppercase tracking-widest text-bee-yellow"
-                    style={{ fontSize: 'clamp(0.6rem, 1vw, 0.75rem)', letterSpacing: '0.3em' }}
-                  >
-                    Killer Bees
-                  </span>
-
-                  <img
-                    src="/src/assets/313420056_580715700507484_3157916469398511501_n.jpg"
-                    alt="American Killer Bees"
-                    className="rounded-full pointer-events-none select-none"
-                    style={{
-                      width: 'clamp(72px, 10vw, 112px)',
-                      height: 'clamp(72px, 10vw, 112px)',
-                      objectFit: 'cover',
-                      mixBlendMode: 'luminosity',
-                      opacity: 0.9,
-                      filter: 'brightness(1.08) drop-shadow(0 0 8px rgba(245,196,0,0.4))',
-                      outline: '1.5px solid rgba(245,196,0,0.5)',
-                      outlineOffset: '2px',
-                    }}
-                    onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
-                  />
-
-                  <span
-                    className="font-display uppercase tracking-widest text-white/60"
-                    style={{ fontSize: 'clamp(0.55rem, 0.9vw, 0.68rem)', letterSpacing: '0.28em' }}
-                  >
-                    Mississippi
-                  </span>
                 </div>
               </div>
 
@@ -306,6 +260,89 @@ export default function Home() {
                 </span>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── AFFILIATION STRIP ────────────────────────────────────────── */}
+      <section
+        className="relative"
+        style={{
+          background: '#0a0a0a',
+          borderTop: '1px solid rgba(245,196,0,0.35)',
+          borderBottom: '1px solid rgba(245,196,0,0.35)',
+        }}
+      >
+        {/* Left red rail matching hero */}
+        <div className="absolute left-0 top-0 bottom-0 w-1 bg-gym-red" />
+
+        <div
+          className="mx-auto px-6 sm:px-10 lg:px-12 py-8 sm:py-10"
+          style={{ maxWidth: '1140px' }}
+        >
+          <div className="flex flex-col sm:flex-row items-center gap-6 sm:gap-10">
+
+            {/* Logo */}
+            <div className="shrink-0 flex items-center justify-center">
+              <img
+                src={killerBeesLogo}
+                alt="American Killer Bees"
+                className="rounded-full"
+                style={{
+                  width: 'clamp(80px, 10vw, 116px)',
+                  height: 'clamp(80px, 10vw, 116px)',
+                  objectFit: 'cover',
+                  mixBlendMode: 'luminosity',
+                  opacity: 0.92,
+                  filter: 'brightness(1.06) drop-shadow(0 0 10px rgba(245,196,0,0.35))',
+                  outline: '1.5px solid rgba(245,196,0,0.5)',
+                  outlineOffset: '3px',
+                }}
+              />
+            </div>
+
+            {/* Divider — horizontal on mobile, vertical on desktop */}
+            <div
+              className="hidden sm:block self-stretch w-px"
+              style={{ background: 'rgba(245,196,0,0.2)' }}
+            />
+            <div
+              className="block sm:hidden h-px w-24"
+              style={{ background: 'rgba(245,196,0,0.2)' }}
+            />
+
+            {/* Text block */}
+            <div className="flex flex-col text-center sm:text-left gap-2 flex-1">
+              {/* Affiliation pill */}
+              <div className="flex items-center gap-2 justify-center sm:justify-start mb-1">
+                <span
+                  className="font-heading uppercase text-gym-red font-bold tracking-widest"
+                  style={{ fontSize: '0.65rem', letterSpacing: '0.3em' }}
+                >
+                  Main School Affiliation
+                </span>
+                <span className="h-px w-6 bg-gym-red/50" />
+              </div>
+
+              <h2
+                className="font-display uppercase text-bee-yellow leading-none"
+                style={{ fontSize: 'clamp(1.4rem, 3vw, 2.2rem)', letterSpacing: '0.05em' }}
+              >
+                Killer Bees Mississippi
+              </h2>
+
+              <p
+                className="font-heading text-white/70 uppercase tracking-wider"
+                style={{ fontSize: 'clamp(0.7rem, 1.2vw, 0.85rem)', letterSpacing: '0.2em' }}
+              >
+                Part of the American Killer Bees family.
+              </p>
+
+              <p className="font-body text-gray-400 leading-relaxed mt-1" style={{ fontSize: 'clamp(0.85rem, 1.3vw, 0.95rem)', maxWidth: '56ch' }}>
+                Killer Bees Clinton represents the Clinton, Mississippi location connected to the larger Killer Bees team. Same fight culture, same hard training, same standard.
+              </p>
+            </div>
+
           </div>
         </div>
       </section>
