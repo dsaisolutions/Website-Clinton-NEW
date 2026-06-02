@@ -378,7 +378,7 @@ export default function Home() {
                   >
                     {d.title}
                   </h3>
-                  <span className="font-heading text-bee-yellow/60 text-xs uppercase tracking-widest mt-1 block">{d.detail}</span>
+                  <span className="font-heading uppercase tracking-widest block mt-2 text-sm md:text-xs font-bold text-[#F5C400] md:text-bee-yellow/60 bg-white/[0.06] md:bg-transparent px-2 py-0.5 md:px-0 md:py-0 rounded-sm md:rounded-none self-start inline-block">{d.detail}</span>
                 </div>
 
                 {/* Divider */}
