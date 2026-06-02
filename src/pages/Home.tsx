@@ -62,15 +62,14 @@ export default function Home() {
 
         {/* ── Main two-column content ── */}
         <div
-          className="relative flex-1 flex flex-col justify-center w-full mx-auto px-6 sm:px-10 lg:px-14"
+          className="relative flex-1 flex flex-col justify-center w-full mx-auto px-6 sm:px-10 lg:px-12"
           style={{
-            maxWidth: '1200px',
+            maxWidth: '1140px',
             paddingTop: 'clamp(5.5rem, 12vh, 8rem)',
             paddingBottom: 'clamp(2rem, 5vh, 3.5rem)',
           }}
         >
-          {/* cols: text takes space it needs; card is fixed width so gap closes naturally */}
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_310px] xl:grid-cols-[1fr_310px] gap-x-6 xl:gap-x-8 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-[minmax(480px,1fr)_320px] gap-x-12 items-center">
 
             {/* ── LEFT: Text ── */}
             <div className="flex flex-col">
@@ -127,8 +126,8 @@ export default function Home() {
             </div>
 
             {/* ── RIGHT: Branded logo unit ── */}
-            <div className="flex justify-center lg:justify-end items-center mt-10 lg:mt-0">
-              <div className="flex flex-col items-center" style={{ width: '100%', maxWidth: '300px' }}>
+            <div className="flex justify-center items-center mt-10 lg:mt-0">
+              <div className="flex flex-col items-center" style={{ width: '100%', maxWidth: '320px' }}>
 
                 {/* KILLER BEES — badge title above card */}
                 <div className="w-full flex items-center gap-2 mb-1.5">
