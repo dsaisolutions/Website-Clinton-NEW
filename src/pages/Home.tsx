@@ -88,7 +88,25 @@ export default function Home() {
               </div>
 
               {/* Headline — three lines, white / yellow / white */}
-              <div className="mb-6" style={{ lineHeight: 0.92 }}>
+              <div className="relative mb-6" style={{ lineHeight: 0.92 }}>
+
+                {/* Brand seal — sits behind headline, white-bg removed via multiply blend */}
+                <img
+                  src="/src/assets/313420056_580715700507484_3157916469398511501_n.jpg"
+                  alt=""
+                  aria-hidden="true"
+                  className="absolute pointer-events-none select-none"
+                  style={{
+                    width: 'clamp(160px, 22vw, 280px)',
+                    opacity: 0.18,
+                    mixBlendMode: 'luminosity',
+                    bottom: '-10%',
+                    right: '-4%',
+                    filter: 'drop-shadow(0 0 18px rgba(245,196,0,0.35))',
+                  }}
+                  onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                />
+
                 {[
                   { text: 'Train Hard.', yellow: false },
                   { text: 'Stay Sharp.', yellow: true },
