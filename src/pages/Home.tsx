@@ -97,8 +97,12 @@ export default function Home() {
                 ].map(({ text, yellow }) => (
                   <div
                     key={text}
-                    className={`font-display uppercase block ${yellow ? 'text-bee-yellow text-shadow-yellow' : 'text-white text-shadow-hard'}`}
-                    style={{ fontSize: 'clamp(3.2rem, 7.8vw, 7.2rem)', lineHeight: 0.92 }}
+                    className="font-display uppercase block"
+                    style={{
+                      fontSize: 'clamp(3.2rem, 7.8vw, 7.2rem)',
+                      lineHeight: 0.92,
+                      color: yellow ? '#F5C400' : '#FFFFFF',
+                    }}
                   >
                     {text}
                   </div>
@@ -128,14 +132,12 @@ export default function Home() {
 
                 {/* KILLER — above the card */}
                 <div
-                  className="font-display uppercase leading-none tracking-widest select-none w-full text-center"
+                  className="font-display uppercase leading-none select-none w-full text-center"
                   style={{
-                    fontSize: 'clamp(1.6rem, 3.2vw, 2.6rem)',
-                    letterSpacing: '0.22em',
-                    color: 'transparent',
-                    WebkitTextStroke: '1.5px #F5C400',
-                    marginBottom: '6px',
-                    opacity: 0.9,
+                    fontSize: 'clamp(1.5rem, 2.8vw, 2.2rem)',
+                    letterSpacing: '0.28em',
+                    color: '#F5C400',
+                    marginBottom: '5px',
                   }}
                 >
                   KILLER
@@ -233,14 +235,12 @@ export default function Home() {
 
                 {/* BEES — below the card */}
                 <div
-                  className="font-display uppercase leading-none tracking-widest select-none w-full text-center"
+                  className="font-display uppercase leading-none select-none w-full text-center"
                   style={{
-                    fontSize: 'clamp(1.6rem, 3.2vw, 2.6rem)',
-                    letterSpacing: '0.22em',
-                    color: 'transparent',
-                    WebkitTextStroke: '1.5px #C41E1E',
-                    marginTop: '8px',
-                    opacity: 0.85,
+                    fontSize: 'clamp(1.5rem, 2.8vw, 2.2rem)',
+                    letterSpacing: '0.28em',
+                    color: '#C41E1E',
+                    marginTop: '7px',
                   }}
                 >
                   BEES

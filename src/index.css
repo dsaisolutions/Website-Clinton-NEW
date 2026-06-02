@@ -25,10 +25,10 @@
     color: transparent;
   }
   .text-shadow-yellow {
-    text-shadow: 5px 5px 0px #8B6000, 8px 8px 0px rgba(0,0,0,0.7);
+    text-shadow: 3px 3px 0px rgba(0,0,0,0.5);
   }
   .text-shadow-hard {
-    text-shadow: 4px 4px 0px #000000;
+    text-shadow: 2px 2px 0px rgba(0,0,0,0.6);
   }
   .text-shadow-red {
     text-shadow: 4px 4px 0px #8B0000;
