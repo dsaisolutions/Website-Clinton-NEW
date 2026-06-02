@@ -126,55 +126,58 @@ export default function Home() {
               </div>
             </div>
 
-            {/* ── RIGHT: Bear fight-poster card ── */}
-            <div className="flex justify-center lg:justify-start items-center">
-              <div className="flex flex-col items-center gap-0" style={{ width: '100%', maxWidth: '300px' }}>
+            {/* ── RIGHT: Branded logo unit ── */}
+            <div className="flex justify-center lg:justify-start items-center mt-10 lg:mt-0">
+              <div className="flex flex-col items-center" style={{ width: '100%', maxWidth: '280px' }}>
 
-                {/* KILLER — above the card */}
-                <div
-                  className="font-display uppercase leading-none select-none w-full text-center"
-                  style={{
-                    fontSize: 'clamp(1.5rem, 2.8vw, 2.2rem)',
-                    letterSpacing: '0.28em',
-                    color: '#F5C400',
-                    marginBottom: '5px',
-                  }}
-                >
-                  KILLER
+                {/* KILLER BEES — badge title above card */}
+                <div className="w-full flex items-center gap-2 mb-2">
+                  <div className="h-px flex-1 bg-bee-yellow/40" />
+                  <span
+                    className="font-display uppercase leading-none select-none whitespace-nowrap"
+                    style={{
+                      fontSize: 'clamp(1rem, 1.8vw, 1.4rem)',
+                      letterSpacing: '0.32em',
+                      color: '#F5C400',
+                    }}
+                  >
+                    KILLER BEES
+                  </span>
+                  <div className="h-px flex-1 bg-bee-yellow/40" />
                 </div>
 
                 {/* Card wrapper */}
                 <div className="relative w-full">
 
-                  {/* Layered offset shadows — red deep, yellow mid */}
+                  {/* Layered offset shadows */}
                   <div
                     className="absolute bg-gym-red"
                     style={{
                       inset: 0,
-                      transform: 'translate(6px, 7px)',
+                      transform: 'translate(5px, 6px)',
                       opacity: 0.45,
-                      clipPath: 'polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 0 100%)',
+                      clipPath: 'polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 0 100%)',
                     }}
                   />
                   <div
                     className="absolute bg-bee-yellow"
                     style={{
                       inset: 0,
-                      transform: 'translate(3px, 3.5px)',
-                      opacity: 0.3,
-                      clipPath: 'polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 0 100%)',
+                      transform: 'translate(2.5px, 3px)',
+                      opacity: 0.28,
+                      clipPath: 'polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 0 100%)',
                     }}
                   />
 
                   {/* Card face */}
                   <div
                     className="relative overflow-hidden border-2 border-bee-yellow"
-                    style={{ clipPath: 'polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 0 100%)' }}
+                    style={{ clipPath: 'polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 0 100%)' }}
                   >
                     {/* Red top accent */}
                     <div className="absolute top-0 left-0 right-0 z-20" style={{ height: '3px', background: '#C41E1E' }} />
 
-                    {/* Card body background with diagonal stripe texture */}
+                    {/* Dark textured background */}
                     <div
                       className="absolute inset-0 z-0"
                       style={{
@@ -183,8 +186,8 @@ export default function Home() {
                           -45deg,
                           transparent 0px,
                           transparent 9px,
-                          rgba(245,196,0,0.035) 9px,
-                          rgba(245,196,0,0.035) 10px
+                          rgba(245,196,0,0.03) 9px,
+                          rgba(245,196,0,0.03) 10px
                         )`,
                       }}
                     />
@@ -195,55 +198,38 @@ export default function Home() {
                         src={bearImg}
                         alt="Killer Bees Clinton mascot"
                         className="w-full h-auto block"
-                        style={{ filter: 'contrast(1.18) brightness(1.04)', display: 'block' }}
+                        style={{ filter: 'contrast(1.18) brightness(1.04)' }}
                       />
-                      {/* Yellow glow at bear's feet */}
                       <div
                         className="absolute bottom-0 left-0 right-0 pointer-events-none z-10"
-                        style={{
-                          height: '35%',
-                          background: 'linear-gradient(to top, rgba(245,196,0,0.16) 0%, transparent 100%)',
-                        }}
+                        style={{ height: '35%', background: 'linear-gradient(to top, rgba(245,196,0,0.14) 0%, transparent 100%)' }}
                       />
                     </div>
 
                     {/* Nameplate */}
                     <div className="relative z-10 bg-gym-black border-t-2 border-bee-yellow flex items-center gap-3 px-4 py-2.5">
                       <div className="h-px flex-1 bg-bee-yellow/35" />
-                      <span className="font-display text-bee-yellow uppercase tracking-[0.5em] leading-none" style={{ fontSize: 'clamp(1.1rem, 2.2vw, 1.35rem)' }}>
+                      <span className="font-display text-bee-yellow uppercase tracking-[0.5em] leading-none" style={{ fontSize: 'clamp(1rem, 2vw, 1.25rem)' }}>
                         Clinton
                       </span>
                       <div className="h-px flex-1 bg-bee-yellow/35" />
                     </div>
 
                     {/* Sport tag row */}
-                    <div className="relative z-10 bg-gym-black border-t border-gym-charcoal-light px-4 py-2 flex items-center justify-center gap-3">
+                    <div className="relative z-10 bg-gym-black border-t border-white/5 px-4 py-2 flex items-center justify-center gap-3">
                       {['BJJ', 'MMA', 'WR'].map((tag, i) => (
                         <div key={tag} className="flex items-center gap-3">
                           {i > 0 && <span className="w-px h-3 bg-bee-yellow/25" />}
-                          <span className="font-heading text-bee-yellow/65 uppercase tracking-widest" style={{ fontSize: '0.65rem' }}>{tag}</span>
+                          <span className="font-heading text-bee-yellow/60 uppercase tracking-widest" style={{ fontSize: '0.6rem' }}>{tag}</span>
                         </div>
                       ))}
                     </div>
                   </div>
 
                   {/* Corner bolt accents */}
-                  <div className="absolute z-30" style={{ top: '-5px', left: '-5px', width: '12px', height: '12px', background: '#C41E1E' }} />
-                  <div className="absolute z-30" style={{ bottom: '-5px', left: '-5px', width: '12px', height: '12px', background: '#F5C400' }} />
-                  <div className="absolute z-30" style={{ bottom: '-5px', right: '-5px', width: '12px', height: '12px', background: '#C41E1E' }} />
-                </div>
-
-                {/* BEES — below the card */}
-                <div
-                  className="font-display uppercase leading-none select-none w-full text-center"
-                  style={{
-                    fontSize: 'clamp(1.5rem, 2.8vw, 2.2rem)',
-                    letterSpacing: '0.28em',
-                    color: '#C41E1E',
-                    marginTop: '7px',
-                  }}
-                >
-                  BEES
+                  <div className="absolute z-30" style={{ top: '-5px', left: '-5px', width: '11px', height: '11px', background: '#C41E1E' }} />
+                  <div className="absolute z-30" style={{ bottom: '-5px', left: '-5px', width: '11px', height: '11px', background: '#F5C400' }} />
+                  <div className="absolute z-30" style={{ bottom: '-5px', right: '-5px', width: '11px', height: '11px', background: '#C41E1E' }} />
                 </div>
 
               </div>
