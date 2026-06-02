@@ -11,9 +11,14 @@ const quickLinks = [
 export default function Footer() {
   return (
     <footer className="bg-gym-charcoal border-t-4 border-bee-yellow relative overflow-hidden">
-      {/* Watermark bee text */}
-      <div className="absolute inset-0 flex items-end justify-end pointer-events-none overflow-hidden opacity-[0.025]" aria-hidden="true">
-        <span className="font-display text-bee-yellow leading-none" style={{ fontSize: 'clamp(100px, 18vw, 260px)' }}>BEES</span>
+      {/* Watermark text */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden opacity-[0.045]" aria-hidden="true">
+        <span
+          className="font-display text-bee-yellow leading-none whitespace-nowrap"
+          style={{ fontSize: 'clamp(80px, 12vw, 180px)', letterSpacing: '0.08em' }}
+        >
+          KILLER BEES
+        </span>
       </div>
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
