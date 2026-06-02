@@ -289,13 +289,11 @@ export default function Home() {
                 alt="American Killer Bees"
                 className="rounded-full"
                 style={{
-                  width: 'clamp(80px, 10vw, 116px)',
-                  height: 'clamp(80px, 10vw, 116px)',
+                  width: 'clamp(88px, 11vw, 128px)',
+                  height: 'clamp(88px, 11vw, 128px)',
                   objectFit: 'cover',
-                  mixBlendMode: 'luminosity',
-                  opacity: 0.92,
-                  filter: 'brightness(1.06) drop-shadow(0 0 10px rgba(245,196,0,0.35))',
-                  outline: '1.5px solid rgba(245,196,0,0.5)',
+                  filter: 'drop-shadow(0 2px 12px rgba(0,0,0,0.7))',
+                  outline: '2px solid rgba(245,196,0,0.45)',
                   outlineOffset: '3px',
                 }}
               />
