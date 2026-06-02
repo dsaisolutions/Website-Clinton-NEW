@@ -88,49 +88,48 @@ export default function Home() {
               </div>
 
               {/* Headline — three lines, white / yellow / white */}
-              <div className="mb-6" style={{ lineHeight: 0.92 }}>
-                {/* TRAIN HARD. */}
+              <div className="mb-5" style={{ lineHeight: 0.92 }}>
                 <div
                   className="font-display uppercase block text-white"
                   style={{ fontSize: 'clamp(3.2rem, 7.8vw, 7.2rem)', lineHeight: 0.92 }}
                 >
                   Train Hard.
                 </div>
-                {/* STAY SHARP. */}
                 <div
                   className="font-display uppercase block"
                   style={{ fontSize: 'clamp(3.2rem, 7.8vw, 7.2rem)', lineHeight: 0.92, color: '#F5C400' }}
                 >
                   Stay Sharp.
                 </div>
-                {/* JOIN THE HIVE. + logo lockup */}
-                <div className="flex items-center gap-3 sm:gap-4" style={{ lineHeight: 0.92 }}>
-                  <div
-                    className="font-display uppercase text-white whitespace-nowrap"
-                    style={{ fontSize: 'clamp(3.2rem, 7.8vw, 7.2rem)', lineHeight: 0.92 }}
-                  >
-                    Join the Hive.
-                  </div>
-                  <img
-                    src="/src/assets/313420056_580715700507484_3157916469398511501_n.jpg"
-                    alt="American Killer Bees"
-                    className="shrink-0 rounded-full pointer-events-none select-none"
-                    style={{
-                      width: 'clamp(56px, 8vw, 100px)',
-                      height: 'clamp(56px, 8vw, 100px)',
-                      objectFit: 'cover',
-                      mixBlendMode: 'luminosity',
-                      opacity: 0.85,
-                      filter: 'drop-shadow(0 0 8px rgba(245,196,0,0.5)) brightness(1.1)',
-                      outline: '2px solid rgba(245,196,0,0.4)',
-                      outlineOffset: '2px',
-                    }}
-                    onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
-                  />
+                <div
+                  className="font-display uppercase block text-white"
+                  style={{ fontSize: 'clamp(3.2rem, 7.8vw, 7.2rem)', lineHeight: 0.92 }}
+                >
+                  Join the Hive.
                 </div>
               </div>
 
-              {/* Thin yellow rule under headline — visual connector */}
+              {/* School badge — centered under headline */}
+              <div className="flex justify-center mb-5">
+                <img
+                  src="/src/assets/313420056_580715700507484_3157916469398511501_n.jpg"
+                  alt="American Killer Bees"
+                  className="rounded-full pointer-events-none select-none"
+                  style={{
+                    width: 'clamp(96px, 13vw, 160px)',
+                    height: 'clamp(96px, 13vw, 160px)',
+                    objectFit: 'cover',
+                    mixBlendMode: 'luminosity',
+                    opacity: 0.88,
+                    filter: 'brightness(1.05) drop-shadow(0 0 10px rgba(245,196,0,0.45))',
+                    outline: '2px solid rgba(245,196,0,0.45)',
+                    outlineOffset: '3px',
+                  }}
+                  onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                />
+              </div>
+
+              {/* Thin yellow rule — visual connector */}
               <div className="flex items-center gap-3 mb-6">
                 <div className="h-px bg-bee-yellow" style={{ width: 'clamp(40px, 6vw, 72px)' }} />
                 <div className="h-px flex-1 bg-white/8" />
