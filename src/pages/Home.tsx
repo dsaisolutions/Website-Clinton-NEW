@@ -277,7 +277,7 @@ export default function Home() {
         <div className="absolute left-0 top-0 bottom-0 w-1 bg-gym-red" />
 
         <div
-          className="mx-auto px-6 sm:px-10 lg:px-12 py-8 sm:py-10"
+          className="mx-auto px-6 sm:px-10 lg:px-12 py-10 sm:py-14"
           style={{ maxWidth: '1140px' }}
         >
           <div className="flex flex-col sm:flex-row items-center gap-6 sm:gap-10">
@@ -289,12 +289,12 @@ export default function Home() {
                 alt="American Killer Bees"
                 className="rounded-full"
                 style={{
-                  width: 'clamp(88px, 11vw, 128px)',
-                  height: 'clamp(88px, 11vw, 128px)',
+                  width: 'clamp(140px, 16vw, 188px)',
+                  height: 'clamp(140px, 16vw, 188px)',
                   objectFit: 'cover',
-                  filter: 'drop-shadow(0 2px 12px rgba(0,0,0,0.7))',
-                  outline: '2px solid rgba(245,196,0,0.45)',
-                  outlineOffset: '3px',
+                  filter: 'drop-shadow(0 3px 16px rgba(0,0,0,0.75))',
+                  outline: '2.5px solid rgba(245,196,0,0.55)',
+                  outlineOffset: '4px',
                 }}
               />
             </div>
