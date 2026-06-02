@@ -39,57 +39,80 @@ export default function Home() {
       {/* ─── HERO ─────────────────────────────────────────────────────── */}
       <section className="relative bg-gym-black flex flex-col" style={{ minHeight: '100svh' }}>
 
-        {/* Background layer */}
+        {/* ── Background layer ── */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-          {/* Diagonal stripe texture — right half only */}
+
+          {/* Fine diagonal stripe — full bleed, very subtle */}
           <div
             className="absolute inset-0"
             style={{
               backgroundImage: `repeating-linear-gradient(
                 -55deg,
                 transparent 0px,
-                transparent 28px,
-                rgba(245,196,0,0.022) 28px,
-                rgba(245,196,0,0.022) 30px
+                transparent 24px,
+                rgba(245,196,0,0.018) 24px,
+                rgba(245,196,0,0.018) 25px
               )`,
             }}
           />
-          {/* Large ghost watermark — anchored center-right so it bridges both columns */}
+
+          {/*
+            KILLER / BEES stacked watermark — centered across the full hero width.
+            Two lines so both words are readable.
+            Left side sits behind the headline (very faint), right side is slightly
+            more opaque so it shows near the logo card.
+          */}
           <div
-            className="absolute select-none"
-            style={{
-              right: '-4%',
-              top: '50%',
-              transform: 'translateY(-52%)',
-              fontSize: 'clamp(180px, 28vw, 420px)',
-              fontFamily: '"Bebas Neue", sans-serif',
-              lineHeight: 1,
-              WebkitTextStroke: '2px rgba(245,196,0,0.055)',
-              color: 'transparent',
-              whiteSpace: 'nowrap',
-              letterSpacing: '0.02em',
-              pointerEvents: 'none',
-              userSelect: 'none',
-            }}
+            className="absolute inset-0 flex flex-col items-center justify-center select-none"
+            style={{ gap: 0 }}
           >
-            BEES
+            {/* Gradient mask: dark on the left (behind text), lighter on right (near logo) */}
+            <div
+              className="absolute inset-0"
+              style={{
+                background: 'linear-gradient(to right, rgba(8,8,8,0.55) 0%, rgba(8,8,8,0.1) 55%, rgba(8,8,8,0) 100%)',
+                zIndex: 2,
+              }}
+            />
+            {['KILLER', 'BEES'].map((word) => (
+              <span
+                key={word}
+                className="font-display leading-none block"
+                style={{
+                  fontSize: 'clamp(120px, 21vw, 340px)',
+                  letterSpacing: '0.06em',
+                  WebkitTextStroke: '2px rgba(196,158,0,0.13)',
+                  color: 'rgba(196,158,0,0.04)',
+                  zIndex: 1,
+                  lineHeight: 0.88,
+                }}
+              >
+                {word}
+              </span>
+            ))}
           </div>
-          {/* Red left rail — always visible */}
+
+          {/* Red left rail */}
           <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gym-red" />
         </div>
 
         {/* ── Main two-column content ── */}
         <div
           className="relative flex-1 flex flex-col justify-center w-full mx-auto px-6 sm:px-10 lg:px-14"
-          style={{ maxWidth: '1220px', paddingTop: 'clamp(5.5rem, 12vh, 8rem)', paddingBottom: 'clamp(2rem, 5vh, 4rem)' }}
+          style={{
+            maxWidth: '1200px',
+            paddingTop: 'clamp(5.5rem, 12vh, 8rem)',
+            paddingBottom: 'clamp(2rem, 5vh, 3.5rem)',
+          }}
         >
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-x-12 xl:gap-x-16 items-center">
+          {/* cols: text takes space it needs; card is fixed width so gap closes naturally */}
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] xl:grid-cols-[1fr_290px] gap-x-10 xl:gap-x-14 items-center">
 
             {/* ── LEFT: Text ── */}
             <div className="flex flex-col">
 
               {/* Location + discipline tags */}
-              <div className="inline-flex items-center gap-0 mb-7 self-start overflow-hidden">
+              <div className="inline-flex items-center gap-0 mb-6 self-start overflow-hidden">
                 <div className="bg-gym-red px-4 py-1.5">
                   <span className="font-heading text-white text-xs uppercase tracking-[0.3em] font-bold">Clinton, MS</span>
                 </div>
@@ -101,29 +124,30 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Headline */}
-              <div className="mb-7">
-                <div
-                  className="font-display uppercase leading-none text-white text-shadow-hard block"
-                  style={{ fontSize: 'clamp(3.4rem, 8vw, 7.5rem)' }}
-                >
-                  Train Hard.
-                </div>
-                <div
-                  className="font-display uppercase leading-none text-bee-yellow text-shadow-yellow block"
-                  style={{ fontSize: 'clamp(3.4rem, 8vw, 7.5rem)' }}
-                >
-                  Stay Sharp.
-                </div>
-                <div
-                  className="font-display uppercase leading-none text-white text-shadow-hard block"
-                  style={{ fontSize: 'clamp(3.4rem, 8vw, 7.5rem)' }}
-                >
-                  Join the Hive.
-                </div>
+              {/* Headline — three lines, white / yellow / white */}
+              <div className="mb-6" style={{ lineHeight: 0.92 }}>
+                {[
+                  { text: 'Train Hard.', yellow: false },
+                  { text: 'Stay Sharp.', yellow: true },
+                  { text: 'Join the Hive.', yellow: false },
+                ].map(({ text, yellow }) => (
+                  <div
+                    key={text}
+                    className={`font-display uppercase block ${yellow ? 'text-bee-yellow text-shadow-yellow' : 'text-white text-shadow-hard'}`}
+                    style={{ fontSize: 'clamp(3.2rem, 7.8vw, 7.2rem)', lineHeight: 0.92 }}
+                  >
+                    {text}
+                  </div>
+                ))}
               </div>
 
-              <p className="font-body text-gray-300 text-lg md:text-xl leading-relaxed mb-9" style={{ maxWidth: '38ch' }}>
+              {/* Thin yellow rule under headline — visual connector */}
+              <div className="flex items-center gap-3 mb-6">
+                <div className="h-px bg-bee-yellow" style={{ width: 'clamp(40px, 6vw, 72px)' }} />
+                <div className="h-px flex-1 bg-white/8" />
+              </div>
+
+              <p className="font-body text-gray-300 leading-relaxed mb-9" style={{ fontSize: 'clamp(1rem, 1.6vw, 1.2rem)', maxWidth: '46ch' }}>
                 Jiu Jitsu, MMA, and Wrestling in Clinton, Mississippi.
                 All levels. Real coaching. No shortcuts.
               </p>
@@ -134,36 +158,49 @@ export default function Home() {
               </div>
             </div>
 
-            {/* ── RIGHT: Bear card ── */}
-            <div className="flex justify-center lg:justify-end items-center">
-              {/* Card outer wrapper — positions the bolt corners and shadow */}
-              <div
-                className="relative"
-                style={{ width: 'clamp(220px, 26vw, 320px)' }}
-              >
-                {/* Drop shadow stack — layered offset rects for poster effect */}
-                <div className="absolute inset-0 translate-x-3 translate-y-3 bg-gym-red opacity-40" style={{ clipPath: 'polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 0 100%)' }} />
-                <div className="absolute inset-0 translate-x-1.5 translate-y-1.5 bg-bee-yellow opacity-25" style={{ clipPath: 'polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 0 100%)' }} />
+            {/* ── RIGHT: Bear fight-poster card ── */}
+            <div className="flex justify-center lg:justify-start items-center">
+              <div className="relative" style={{ width: '100%', maxWidth: '300px' }}>
 
-                {/* Main card */}
+                {/* Layered offset shadows — red deep, yellow mid */}
+                <div
+                  className="absolute bg-gym-red"
+                  style={{
+                    inset: 0,
+                    transform: 'translate(6px, 7px)',
+                    opacity: 0.45,
+                    clipPath: 'polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 0 100%)',
+                  }}
+                />
+                <div
+                  className="absolute bg-bee-yellow"
+                  style={{
+                    inset: 0,
+                    transform: 'translate(3px, 3.5px)',
+                    opacity: 0.3,
+                    clipPath: 'polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 0 100%)',
+                  }}
+                />
+
+                {/* Card face */}
                 <div
                   className="relative overflow-hidden border-2 border-bee-yellow"
-                  style={{ clipPath: 'polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 0 100%)' }}
+                  style={{ clipPath: 'polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 0 100%)' }}
                 >
-                  {/* Red top accent bar */}
-                  <div className="absolute top-0 left-0 right-0 h-1.5 bg-gym-red z-20" />
+                  {/* Red top accent — 3px for crispness */}
+                  <div className="absolute top-0 left-0 right-0 z-20" style={{ height: '3px', background: '#C41E1E' }} />
 
-                  {/* Diagonal stripe texture behind bear */}
+                  {/* Card body background with diagonal stripe texture */}
                   <div
                     className="absolute inset-0 z-0"
                     style={{
-                      background: '#0d0d0d',
+                      background: '#0c0c0c',
                       backgroundImage: `repeating-linear-gradient(
                         -45deg,
                         transparent 0px,
-                        transparent 10px,
-                        rgba(245,196,0,0.04) 10px,
-                        rgba(245,196,0,0.04) 11px
+                        transparent 9px,
+                        rgba(245,196,0,0.035) 9px,
+                        rgba(245,196,0,0.035) 10px
                       )`,
                     }}
                   />
@@ -174,46 +211,51 @@ export default function Home() {
                       src={bearImg}
                       alt="Killer Bees Clinton mascot"
                       className="w-full h-auto block"
-                      style={{ filter: 'contrast(1.2) brightness(1.05)' }}
+                      style={{ filter: 'contrast(1.18) brightness(1.04)', display: 'block' }}
                     />
-                    {/* Yellow glow at bottom of bear */}
+                    {/* Yellow glow at bear's feet — brand warmth */}
                     <div
-                      className="absolute bottom-0 left-0 right-0 h-20 pointer-events-none z-10"
-                      style={{ background: 'linear-gradient(to top, rgba(245,196,0,0.18) 0%, transparent 100%)' }}
+                      className="absolute bottom-0 left-0 right-0 pointer-events-none z-10"
+                      style={{
+                        height: '35%',
+                        background: 'linear-gradient(to top, rgba(245,196,0,0.16) 0%, transparent 100%)',
+                      }}
                     />
                   </div>
 
                   {/* Nameplate */}
-                  <div className="relative z-10 bg-gym-black border-t-2 border-bee-yellow py-2.5 px-4 flex items-center gap-3">
-                    <div className="h-px flex-1 bg-bee-yellow/40" />
-                    <span className="font-display text-bee-yellow uppercase tracking-[0.5em] text-xl leading-none">Clinton</span>
-                    <div className="h-px flex-1 bg-bee-yellow/40" />
+                  <div className="relative z-10 bg-gym-black border-t-2 border-bee-yellow flex items-center gap-3 px-4 py-2.5">
+                    <div className="h-px flex-1 bg-bee-yellow/35" />
+                    <span className="font-display text-bee-yellow uppercase tracking-[0.5em] leading-none" style={{ fontSize: 'clamp(1.1rem, 2.2vw, 1.35rem)' }}>
+                      Clinton
+                    </span>
+                    <div className="h-px flex-1 bg-bee-yellow/35" />
                   </div>
 
-                  {/* Sport tags below nameplate */}
+                  {/* Sport tag row */}
                   <div className="relative z-10 bg-gym-black border-t border-gym-charcoal-light px-4 py-2 flex items-center justify-center gap-3">
                     {['BJJ', 'MMA', 'WR'].map((tag, i) => (
                       <div key={tag} className="flex items-center gap-3">
-                        {i > 0 && <span className="w-px h-3 bg-bee-yellow/30" />}
-                        <span className="font-heading text-bee-yellow/70 text-xs uppercase tracking-widest">{tag}</span>
+                        {i > 0 && <span className="w-px h-3 bg-bee-yellow/25" />}
+                        <span className="font-heading text-bee-yellow/65 uppercase tracking-widest" style={{ fontSize: '0.65rem' }}>{tag}</span>
                       </div>
                     ))}
                   </div>
                 </div>
 
                 {/* Corner bolt accents */}
-                <div className="absolute -top-1.5 -left-1.5 w-3.5 h-3.5 bg-gym-red z-30" />
-                <div className="absolute -bottom-1.5 -left-1.5 w-3.5 h-3.5 bg-bee-yellow z-30" />
-                <div className="absolute -bottom-1.5 -right-1.5 w-3.5 h-3.5 bg-gym-red z-30" />
+                <div className="absolute z-30" style={{ top: '-5px', left: '-5px', width: '12px', height: '12px', background: '#C41E1E' }} />
+                <div className="absolute z-30" style={{ bottom: '-5px', left: '-5px', width: '12px', height: '12px', background: '#F5C400' }} />
+                <div className="absolute z-30" style={{ bottom: '-5px', right: '-5px', width: '12px', height: '12px', background: '#C41E1E' }} />
               </div>
             </div>
 
           </div>
         </div>
 
-        {/* Bottom scoreboard bar */}
+        {/* ── Bottom scoreboard bar ── */}
         <div className="relative bg-bee-yellow">
-          <div className="w-full mx-auto px-6 sm:px-10 lg:px-14" style={{ maxWidth: '1220px' }}>
+          <div className="w-full mx-auto px-6 sm:px-10 lg:px-14" style={{ maxWidth: '1200px' }}>
             <div className="flex flex-col sm:flex-row items-center justify-between py-3 gap-2">
               <div className="flex items-center gap-6 divide-x divide-bee-yellow-dark">
                 {['Jiu Jitsu', 'MMA', 'Wrestling'].map((d) => (
