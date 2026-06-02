@@ -402,7 +402,7 @@ export default function Home() {
 
       {/* ─── WHY TRAIN WITH KILLER BEES ───────────────────────────────── */}
       <section className="relative overflow-hidden">
-        {/* Split background */}
+        {/* Split background — yellow left on desktop, full yellow on mobile */}
         <div className="absolute inset-0">
           <div className="absolute left-0 top-0 bottom-0 w-full lg:w-1/2 bg-bee-yellow" />
           <div className="absolute right-0 top-0 bottom-0 hidden lg:block w-1/2 bg-gym-charcoal" />
@@ -443,23 +443,32 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Right: pillars (on dark) */}
-            <div className="grid grid-cols-1 gap-0">
+            {/* Right: pillars */}
+            {/* Desktop: dark row list. Mobile: bold dark cards on yellow bg */}
+            <div className="grid grid-cols-1 gap-4 lg:gap-0">
               {pillars.map((p, i) => (
                 <div
                   key={p.label}
-                  className={`group flex gap-4 items-start py-5 px-6 border-b border-gym-charcoal-light/60 hover:bg-bee-yellow/5 transition-colors ${
-                    i === 0 ? 'border-t border-gym-charcoal-light/60' : ''
-                  }`}
+                  className={`group
+                    /* ── Mobile card ── */
+                    flex gap-4 items-start
+                    bg-gym-black border-l-4 border-gym-red rounded-sm
+                    px-5 py-5 shadow-lg
+                    /* ── Desktop row ── */
+                    lg:bg-transparent lg:border-l-0 lg:rounded-none lg:shadow-none
+                    lg:border-b lg:border-gym-charcoal-light/60 lg:py-5 lg:px-6
+                    lg:hover:bg-bee-yellow/5 lg:transition-colors
+                    ${i === 0 ? 'lg:border-t lg:border-gym-charcoal-light/60' : ''}
+                  `}
                 >
                   <span className="font-display text-bee-yellow text-2xl leading-none shrink-0 mt-0.5 group-hover:text-bee-yellow-bright transition-colors">
                     {String(i + 1).padStart(2, '0')}
                   </span>
                   <div>
-                    <div className="font-heading text-white uppercase tracking-wider text-base group-hover:text-bee-yellow transition-colors">
+                    <div className="font-heading text-white uppercase tracking-wider text-lg lg:text-base group-hover:text-bee-yellow transition-colors">
                       {p.label}
                     </div>
-                    <div className="font-body text-gray-500 text-sm mt-0.5">{p.desc}</div>
+                    <div className="font-body text-gray-300 lg:text-gray-500 text-base lg:text-sm leading-relaxed mt-1">{p.desc}</div>
                   </div>
                 </div>
               ))}
