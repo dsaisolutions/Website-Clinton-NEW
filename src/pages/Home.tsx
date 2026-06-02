@@ -70,7 +70,7 @@ export default function Home() {
           }}
         >
           {/* cols: text takes space it needs; card is fixed width so gap closes naturally */}
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] xl:grid-cols-[1fr_290px] gap-x-10 xl:gap-x-14 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_310px] xl:grid-cols-[1fr_310px] gap-x-6 xl:gap-x-8 items-center">
 
             {/* ── LEFT: Text ── */}
             <div className="flex flex-col">
@@ -127,23 +127,23 @@ export default function Home() {
             </div>
 
             {/* ── RIGHT: Branded logo unit ── */}
-            <div className="flex justify-center lg:justify-start items-center mt-10 lg:mt-0">
-              <div className="flex flex-col items-center" style={{ width: '100%', maxWidth: '280px' }}>
+            <div className="flex justify-center lg:justify-end items-center mt-10 lg:mt-0">
+              <div className="flex flex-col items-center" style={{ width: '100%', maxWidth: '300px' }}>
 
                 {/* KILLER BEES — badge title above card */}
-                <div className="w-full flex items-center gap-2 mb-2">
-                  <div className="h-px flex-1 bg-bee-yellow/40" />
+                <div className="w-full flex items-center gap-2 mb-1.5">
+                  <div className="h-px flex-1 bg-bee-yellow/45" />
                   <span
                     className="font-display uppercase leading-none select-none whitespace-nowrap"
                     style={{
-                      fontSize: 'clamp(1rem, 1.8vw, 1.4rem)',
-                      letterSpacing: '0.32em',
+                      fontSize: 'clamp(1.15rem, 2vw, 1.6rem)',
+                      letterSpacing: '0.26em',
                       color: '#F5C400',
                     }}
                   >
                     KILLER BEES
                   </span>
-                  <div className="h-px flex-1 bg-bee-yellow/40" />
+                  <div className="h-px flex-1 bg-bee-yellow/45" />
                 </div>
 
                 {/* Card wrapper */}
