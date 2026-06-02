@@ -88,42 +88,46 @@ export default function Home() {
               </div>
 
               {/* Headline — three lines, white / yellow / white */}
-              <div className="relative mb-6" style={{ lineHeight: 0.92 }}>
-
-                {/* Brand seal — sits behind headline, white-bg removed via multiply blend */}
-                <img
-                  src="/src/assets/313420056_580715700507484_3157916469398511501_n.jpg"
-                  alt=""
-                  aria-hidden="true"
-                  className="absolute pointer-events-none select-none"
-                  style={{
-                    width: 'clamp(160px, 22vw, 280px)',
-                    opacity: 0.18,
-                    mixBlendMode: 'luminosity',
-                    bottom: '-10%',
-                    right: '-4%',
-                    filter: 'drop-shadow(0 0 18px rgba(245,196,0,0.35))',
-                  }}
-                  onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
-                />
-
-                {[
-                  { text: 'Train Hard.', yellow: false },
-                  { text: 'Stay Sharp.', yellow: true },
-                  { text: 'Join the Hive.', yellow: false },
-                ].map(({ text, yellow }) => (
+              <div className="mb-6" style={{ lineHeight: 0.92 }}>
+                {/* TRAIN HARD. */}
+                <div
+                  className="font-display uppercase block text-white"
+                  style={{ fontSize: 'clamp(3.2rem, 7.8vw, 7.2rem)', lineHeight: 0.92 }}
+                >
+                  Train Hard.
+                </div>
+                {/* STAY SHARP. */}
+                <div
+                  className="font-display uppercase block"
+                  style={{ fontSize: 'clamp(3.2rem, 7.8vw, 7.2rem)', lineHeight: 0.92, color: '#F5C400' }}
+                >
+                  Stay Sharp.
+                </div>
+                {/* JOIN THE HIVE. + logo lockup */}
+                <div className="flex items-center gap-3 sm:gap-4" style={{ lineHeight: 0.92 }}>
                   <div
-                    key={text}
-                    className="font-display uppercase block"
-                    style={{
-                      fontSize: 'clamp(3.2rem, 7.8vw, 7.2rem)',
-                      lineHeight: 0.92,
-                      color: yellow ? '#F5C400' : '#FFFFFF',
-                    }}
+                    className="font-display uppercase text-white whitespace-nowrap"
+                    style={{ fontSize: 'clamp(3.2rem, 7.8vw, 7.2rem)', lineHeight: 0.92 }}
                   >
-                    {text}
+                    Join the Hive.
                   </div>
-                ))}
+                  <img
+                    src="/src/assets/313420056_580715700507484_3157916469398511501_n.jpg"
+                    alt="American Killer Bees"
+                    className="shrink-0 rounded-full pointer-events-none select-none"
+                    style={{
+                      width: 'clamp(56px, 8vw, 100px)',
+                      height: 'clamp(56px, 8vw, 100px)',
+                      objectFit: 'cover',
+                      mixBlendMode: 'luminosity',
+                      opacity: 0.85,
+                      filter: 'drop-shadow(0 0 8px rgba(245,196,0,0.5)) brightness(1.1)',
+                      outline: '2px solid rgba(245,196,0,0.4)',
+                      outlineOffset: '2px',
+                    }}
+                    onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                  />
+                </div>
               </div>
 
               {/* Thin yellow rule under headline — visual connector */}
