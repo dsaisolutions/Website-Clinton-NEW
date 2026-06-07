@@ -31,10 +31,10 @@ const affiliates: Affiliate[] = [
   },
   {
     schoolName: 'Next Level Combat',
-    logo: null, // TODO: Add logo URL — site unavailable at build time
+    logo: '/Pearl_NLC.png',
     contactName: '',
     phone: '601-821-2540',
-    email: '',
+    email: 'info@nlcofms.com',
     website: 'https://nlcofms.com/',
     streetAddress: '111 Fairmont Plaza',
     city: 'Pearl',
@@ -57,7 +57,7 @@ const affiliates: Affiliate[] = [
   },
   {
     schoolName: 'Primal MMA - Mendenhall',
-    logo: null, // TODO: Add logo URL — site unavailable at build time
+    logo: 'https://static.wixstatic.com/media/224a41_df2d1f45cb654013bb55f1419103c4a8~mv2.png',
     contactName: '',
     phone: '(601) 230-5050',
     email: 'info@primalfitmma.com',
