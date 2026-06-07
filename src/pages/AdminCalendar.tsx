@@ -1,80 +1,183 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, CreditCard as Edit2, Trash2, Eye, EyeOff, Ban, RotateCcw, LogOut, AlertCircle, X, ChevronDown } from 'lucide-react';
+import {
+  Plus, Trash2, Eye, EyeOff, Ban, RotateCcw, LogOut,
+  AlertCircle, X, ChevronDown, Pencil, RefreshCw,
+} from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import type { CalendarEvent, EventType } from '../lib/supabase';
+import type { CalendarEvent } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 
-const EVENT_TYPE_OPTS: { value: EventType; label: string }[] = [
-  { value: 'bjj', label: 'Jiu Jitsu' },
-  { value: 'mma', label: 'MMA' },
-  { value: 'wrestling', label: 'Wrestling' },
-  { value: 'kids', label: 'Kids' },
-  { value: 'open-mat', label: 'Open Mat' },
-  { value: 'other', label: 'Other' },
+// ─── Display config ───────────────────────────────────────────────────────────
+
+const EVENT_TYPE_OPTS = [
+  { value: 'class',    label: 'Class'    },
+  { value: 'workshop', label: 'Workshop' },
 ];
 
-const TYPE_COLOR: Record<EventType, string> = {
-  bjj: '#2563EB',
-  mma: '#C41E1E',
-  wrestling: '#D97706',
-  kids: '#16A34A',
+const AUDIENCE_OPTS = [
+  { value: 'all',    label: 'All'    },
+  { value: 'adults', label: 'Adults' },
+  { value: 'kids',   label: 'Kids'   },
+  { value: 'women',  label: 'Women'  },
+];
+
+const LEVEL_OPTS = [
+  { value: 'all levels', label: 'All Levels' },
+  { value: 'wrestling',  label: 'Wrestling'  },
+  { value: 'gi',         label: 'Gi'         },
+  { value: 'no gi',      label: 'No Gi'      },
+  { value: 'mma',        label: 'MMA'        },
+  { value: 'open mat',   label: 'Open Mat'   },
+];
+
+const DAYS_OF_WEEK = [
+  { value: '0', label: 'Sunday'    },
+  { value: '1', label: 'Monday'    },
+  { value: '2', label: 'Tuesday'   },
+  { value: '3', label: 'Wednesday' },
+  { value: '4', label: 'Thursday'  },
+  { value: '5', label: 'Friday'    },
+  { value: '6', label: 'Saturday'  },
+];
+
+const TYPE_COLOR: Record<string, string> = {
+  class:      '#2563EB',
+  workshop:   '#D97706',
+  bjj:        '#2563EB',
+  mma:        '#C41E1E',
+  wrestling:  '#D97706',
+  kids:       '#16A34A',
   'open-mat': '#F5C400',
-  other: '#6B7280',
+  other:      '#6B7280',
 };
 
-function formatLocalDatetime(iso: string) {
-  if (!iso) return '';
-  return iso.slice(0, 16); // YYYY-MM-DDTHH:MM
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function fmtDate(iso: string) {
+  return new Date(iso).toLocaleDateString('en-US', {
+    weekday: 'short', month: 'short', day: 'numeric',
+  });
 }
 
-function toLocalISOString(localDatetime: string): string {
-  if (!localDatetime) return '';
-  // Input is local YYYY-MM-DDTHH:MM — convert to UTC ISO string
-  const d = new Date(localDatetime);
+function fmtTime(iso: string) {
+  return new Date(iso).toLocaleTimeString('en-US', {
+    hour: 'numeric', minute: '2-digit', hour12: true,
+  });
+}
+
+function toDatetimeLocal(iso: string) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function localInputToISO(val: string): string {
+  if (!val) return '';
+  return new Date(val).toISOString();
+}
+
+function getLocalTimeParts(iso: string): { h: number; m: number } {
+  const d = new Date(iso);
+  return { h: d.getHours(), m: d.getMinutes() };
+}
+
+function replaceTime(originalIso: string, h: number, m: number): string {
+  const d = new Date(originalIso);
+  d.setHours(h, m, 0, 0);
   return d.toISOString();
 }
+
+/**
+ * Returns all dates between startDate and endDate (inclusive, YYYY-MM-DD strings)
+ * that fall on the given dayOfWeek (0=Sun). Uses noon local time to avoid DST edge cases.
+ */
+function generateWeeklyDates(startDate: string, endDate: string, dayOfWeek: number): Date[] {
+  const [sy, sm, sd] = startDate.split('-').map(Number);
+  const [ey, em, ed] = endDate.split('-').map(Number);
+  const start = new Date(sy, sm - 1, sd, 12);
+  const end   = new Date(ey, em - 1, ed, 12);
+
+  const diff = (dayOfWeek - start.getDay() + 7) % 7;
+  const cur  = new Date(start);
+  cur.setDate(cur.getDate() + diff);
+
+  const result: Date[] = [];
+  while (cur <= end) {
+    result.push(new Date(cur));
+    cur.setDate(cur.getDate() + 7);
+  }
+  return result;
+}
+
+/** Combine a Date's calendar date with a 'HH:MM' time string → UTC ISO string. */
+function combineDateAndTime(date: Date, timeStr: string): string {
+  const [hh, mm] = timeStr.split(':').map(Number);
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate(), hh, mm, 0, 0).toISOString();
+}
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+type EditScope = 'this' | 'future' | 'all';
 
 interface FormState {
   title: string;
   description: string;
-  event_type: EventType;
+  event_type: string;
   audience: string;
   class_level: string;
-  start_time: string;
-  end_time: string;
   location: string;
   is_published: boolean;
   is_cancelled: boolean;
+  // Single-event
+  start_time: string;
+  end_time: string;
+  // Recurrence (create-only)
+  repeat_type: 'none' | 'weekly';
+  recur_start_date: string;
+  recur_end_date: string;
+  recur_day: string;
+  recur_start_time: string;
+  recur_end_time: string;
 }
 
 const EMPTY_FORM: FormState = {
   title: '',
   description: '',
-  event_type: 'bjj',
+  event_type: 'class',
   audience: 'all',
   class_level: 'all levels',
+  location: '',
+  is_published: true,
+  is_cancelled: false,
   start_time: '',
   end_time: '',
-  location: '',
-  is_published: false,
-  is_cancelled: false,
+  repeat_type: 'none',
+  recur_start_date: '',
+  recur_end_date: '',
+  recur_day: '1',
+  recur_start_time: '',
+  recur_end_time: '',
 };
 
 function toFormState(ev: CalendarEvent): FormState {
   return {
-    title: ev.title,
-    description: ev.description ?? '',
-    event_type: ev.event_type as EventType,
-    audience: ev.audience,
-    class_level: ev.class_level,
-    start_time: formatLocalDatetime(ev.start_time),
-    end_time: formatLocalDatetime(ev.end_time),
-    location: ev.location ?? '',
+    ...EMPTY_FORM,
+    title:        ev.title,
+    description:  ev.description ?? '',
+    event_type:   ev.event_type,
+    audience:     ev.audience,
+    class_level:  ev.class_level,
+    location:     ev.location ?? '',
     is_published: ev.is_published,
     is_cancelled: ev.is_cancelled,
+    start_time:   toDatetimeLocal(ev.start_time),
+    end_time:     toDatetimeLocal(ev.end_time),
   };
 }
+
+// ─── EventModal ───────────────────────────────────────────────────────────────
 
 function EventModal({
   editing,
@@ -85,64 +188,174 @@ function EventModal({
   onClose: () => void;
   onSaved: () => void;
 }) {
-  const [form, setForm] = useState<FormState>(editing ? toFormState(editing) : EMPTY_FORM);
-  const [error, setError] = useState('');
-  const [saving, setSaving] = useState(false);
+  const [form, setForm]           = useState<FormState>(editing ? toFormState(editing) : EMPTY_FORM);
+  const [editScope, setEditScope] = useState<EditScope>('this');
+  const [error, setError]         = useState('');
+  const [saving, setSaving]       = useState(false);
 
   const set = (k: keyof FormState, v: string | boolean) =>
     setForm(prev => ({ ...prev, [k]: v }));
 
+  const hasSeries = Boolean(editing?.series_id);
+
+  const validate = (): string => {
+    if (!form.title.trim()) return 'Title is required.';
+    if (editing || form.repeat_type === 'none') {
+      if (!form.start_time) return 'Start time is required.';
+      if (!form.end_time)   return 'End time is required.';
+      if (new Date(form.start_time) >= new Date(form.end_time))
+        return 'End time must be after start time.';
+    } else {
+      if (!form.recur_start_date) return 'Start date is required.';
+      if (!form.recur_end_date)   return 'End date is required.';
+      if (form.recur_end_date < form.recur_start_date)
+        return 'End date cannot be before start date.';
+      if (!form.recur_start_time) return 'Start time is required.';
+      if (!form.recur_end_time)   return 'End time is required.';
+      if (form.recur_start_time >= form.recur_end_time)
+        return 'End time must be after start time.';
+    }
+    return '';
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const err = validate();
+    if (err) { setError(err); return; }
     setError('');
-
-    if (!form.start_time || !form.end_time) {
-      setError('Start and end times are required.');
-      return;
-    }
-    if (new Date(form.start_time) >= new Date(form.end_time)) {
-      setError('End time must be after start time.');
-      return;
-    }
-
     setSaving(true);
+    try {
+      editing ? await handleEdit() : await handleCreate();
+      onSaved();
+    } catch (ex: unknown) {
+      setError(ex instanceof Error ? ex.message : 'An error occurred.');
+    } finally {
+      setSaving(false);
+    }
+  };
 
-    const payload = {
-      title: form.title.trim(),
+  const handleCreate = async () => {
+    const base = {
+      title:       form.title.trim(),
       description: form.description.trim() || null,
-      event_type: form.event_type,
-      audience: form.audience.trim() || 'all',
-      class_level: form.class_level.trim() || 'all levels',
-      start_time: toLocalISOString(form.start_time),
-      end_time: toLocalISOString(form.end_time),
-      location: form.location.trim() || null,
+      event_type:  form.event_type,
+      audience:    form.audience,
+      class_level: form.class_level,
+      location:    form.location.trim() || null,
+      is_published: form.is_published,
+      is_cancelled: false,
+    };
+
+    if (form.repeat_type === 'none') {
+      const { error } = await supabase.from('calendar_events').insert({
+        ...base,
+        start_time: localInputToISO(form.start_time),
+        end_time:   localInputToISO(form.end_time),
+        series_id:  null,
+      });
+      if (error) throw new Error(error.message);
+    } else {
+      const seriesId = crypto.randomUUID();
+      const dates    = generateWeeklyDates(
+        form.recur_start_date,
+        form.recur_end_date,
+        parseInt(form.recur_day, 10),
+      );
+      if (dates.length === 0)
+        throw new Error('No matching dates found. Verify your start date, end date, and day of week.');
+
+      const rows = dates.map(date => ({
+        ...base,
+        start_time: combineDateAndTime(date, form.recur_start_time),
+        end_time:   combineDateAndTime(date, form.recur_end_time),
+        series_id:  seriesId,
+      }));
+
+      const { error } = await supabase.from('calendar_events').insert(rows);
+      if (error) throw new Error(error.message);
+    }
+  };
+
+  const handleEdit = async () => {
+    if (!editing) return;
+
+    const basePayload: Record<string, unknown> = {
+      title:        form.title.trim(),
+      description:  form.description.trim() || null,
+      event_type:   form.event_type,
+      audience:     form.audience,
+      class_level:  form.class_level,
+      location:     form.location.trim() || null,
       is_published: form.is_published,
       is_cancelled: form.is_cancelled,
     };
 
-    const { error: dbErr } = editing
-      ? await supabase.from('calendar_events').update(payload).eq('id', editing.id)
-      : await supabase.from('calendar_events').insert(payload);
+    const newStartISO = localInputToISO(form.start_time);
+    const newEndISO   = localInputToISO(form.end_time);
 
-    setSaving(false);
+    // Single-event or "this event only"
+    if (!hasSeries || editScope === 'this') {
+      const { error } = await supabase
+        .from('calendar_events')
+        .update({ ...basePayload, start_time: newStartISO, end_time: newEndISO })
+        .eq('id', editing.id);
+      if (error) throw new Error(error.message);
+      return;
+    }
 
-    if (dbErr) {
-      setError(dbErr.message);
+    // Series scope — check whether only the time-of-day changed
+    const origStartParts = getLocalTimeParts(editing.start_time);
+    const origEndParts   = getLocalTimeParts(editing.end_time);
+    const newStartParts  = getLocalTimeParts(newStartISO);
+    const newEndParts    = getLocalTimeParts(newEndISO);
+
+    const timesChanged =
+      origStartParts.h !== newStartParts.h || origStartParts.m !== newStartParts.m ||
+      origEndParts.h   !== newEndParts.h   || origEndParts.m   !== newEndParts.m;
+
+    if (!timesChanged) {
+      // Non-time fields only — simple bulk update
+      let query = supabase
+        .from('calendar_events')
+        .update(basePayload)
+        .eq('series_id', editing.series_id!);
+      if (editScope === 'future') query = query.gte('start_time', editing.start_time);
+      const { error } = await query;
+      if (error) throw new Error(error.message);
     } else {
-      onSaved();
+      // Fetch affected rows, update each preserving original date + new time
+      let q = supabase
+        .from('calendar_events')
+        .select('id, start_time, end_time')
+        .eq('series_id', editing.series_id!);
+      if (editScope === 'future') q = q.gte('start_time', editing.start_time);
+
+      const { data, error: fetchErr } = await q;
+      if (fetchErr) throw new Error(fetchErr.message);
+
+      for (const row of (data ?? []) as { id: string; start_time: string; end_time: string }[]) {
+        const updatedStart = replaceTime(row.start_time, newStartParts.h, newStartParts.m);
+        const updatedEnd   = replaceTime(row.end_time,   newEndParts.h,   newEndParts.m);
+        const { error } = await supabase
+          .from('calendar_events')
+          .update({ ...basePayload, start_time: updatedStart, end_time: updatedEnd })
+          .eq('id', row.id);
+        if (error) throw new Error(error.message);
+      }
     }
   };
 
   const inputCls =
     'w-full bg-gym-black border border-gym-charcoal-light text-white font-body text-sm px-3 py-2.5 focus:outline-none focus:border-bee-yellow transition-colors placeholder-gray-700';
   const labelCls = 'font-heading text-[11px] uppercase tracking-widest text-gray-500 block mb-1.5';
+  const selCls   = `${inputCls} appearance-none`;
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center px-4"
-      style={{ background: 'rgba(0,0,0,0.85)' }}
+      className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6"
+      style={{ background: 'rgba(0,0,0,0.88)' }}
     >
-      <div className="relative w-full max-w-xl bg-gym-charcoal border border-gym-charcoal-light overflow-y-auto max-h-[90vh]">
+      <div className="relative w-full max-w-xl bg-gym-charcoal border border-gym-charcoal-light overflow-y-auto max-h-[92vh]">
         <div className="h-1 bg-bee-yellow" />
 
         <div className="flex items-center justify-between px-6 py-4 border-b border-gym-charcoal-light">
@@ -155,6 +368,8 @@ function EventModal({
         </div>
 
         <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
+
+          {/* Title */}
           <div>
             <label className={labelCls}>Title *</label>
             <input
@@ -166,6 +381,7 @@ function EventModal({
             />
           </div>
 
+          {/* Description */}
           <div>
             <label className={labelCls}>Description</label>
             <textarea
@@ -177,14 +393,15 @@ function EventModal({
             />
           </div>
 
+          {/* Event Type / Audience */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className={labelCls}>Event Type *</label>
               <div className="relative">
                 <select
-                  className={`${inputCls} appearance-none pr-8`}
+                  className={`${selCls} pr-8`}
                   value={form.event_type}
-                  onChange={e => set('event_type', e.target.value as EventType)}
+                  onChange={e => set('event_type', e.target.value)}
                 >
                   {EVENT_TYPE_OPTS.map(o => (
                     <option key={o.value} value={o.value}>{o.label}</option>
@@ -193,29 +410,40 @@ function EventModal({
                 <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
               </div>
             </div>
-
             <div>
               <label className={labelCls}>Audience</label>
-              <input
-                className={inputCls}
-                value={form.audience}
-                onChange={e => set('audience', e.target.value)}
-                placeholder="all"
-              />
+              <div className="relative">
+                <select
+                  className={`${selCls} pr-8`}
+                  value={form.audience}
+                  onChange={e => set('audience', e.target.value)}
+                >
+                  {AUDIENCE_OPTS.map(o => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
+                </select>
+                <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
+              </div>
             </div>
           </div>
 
+          {/* Class Level / Location */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className={labelCls}>Class Level</label>
-              <input
-                className={inputCls}
-                value={form.class_level}
-                onChange={e => set('class_level', e.target.value)}
-                placeholder="all levels"
-              />
+              <div className="relative">
+                <select
+                  className={`${selCls} pr-8`}
+                  value={form.class_level}
+                  onChange={e => set('class_level', e.target.value)}
+                >
+                  {LEVEL_OPTS.map(o => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
+                </select>
+                <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
+              </div>
             </div>
-
             <div>
               <label className={labelCls}>Location</label>
               <input
@@ -227,30 +455,126 @@ function EventModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          {/* Repeat type selector (create only) */}
+          {!editing && (
             <div>
-              <label className={labelCls}>Start Time *</label>
-              <input
-                type="datetime-local"
-                className={inputCls}
-                required
-                value={form.start_time}
-                onChange={e => set('start_time', e.target.value)}
-              />
+              <label className={labelCls}>Repeat</label>
+              <div className="flex gap-6">
+                {(['none', 'weekly'] as const).map(rt => (
+                  <label key={rt} className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="repeat_type"
+                      value={rt}
+                      checked={form.repeat_type === rt}
+                      onChange={() => set('repeat_type', rt)}
+                      className="accent-bee-yellow w-4 h-4"
+                    />
+                    <span className="font-heading text-xs uppercase tracking-widest text-gray-400">
+                      {rt === 'none' ? 'None' : 'Weekly'}
+                    </span>
+                  </label>
+                ))}
+              </div>
             </div>
+          )}
 
-            <div>
-              <label className={labelCls}>End Time *</label>
-              <input
-                type="datetime-local"
-                className={inputCls}
-                required
-                value={form.end_time}
-                onChange={e => set('end_time', e.target.value)}
-              />
+          {/* Datetime fields — single event or edit */}
+          {(editing || form.repeat_type === 'none') && (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className={labelCls}>Start *</label>
+                <input
+                  type="datetime-local"
+                  className={inputCls}
+                  required
+                  value={form.start_time}
+                  onChange={e => set('start_time', e.target.value)}
+                />
+              </div>
+              <div>
+                <label className={labelCls}>End *</label>
+                <input
+                  type="datetime-local"
+                  className={inputCls}
+                  required
+                  value={form.end_time}
+                  onChange={e => set('end_time', e.target.value)}
+                />
+              </div>
             </div>
-          </div>
+          )}
 
+          {/* Weekly recurrence fields (create only) */}
+          {!editing && form.repeat_type === 'weekly' && (
+            <div className="space-y-4 bg-gym-black border border-gym-charcoal-light p-4">
+              <p className="font-heading text-[11px] uppercase tracking-widest text-gray-500">Weekly Schedule</p>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className={labelCls}>Start Date *</label>
+                  <input
+                    type="date"
+                    className={inputCls}
+                    required
+                    value={form.recur_start_date}
+                    onChange={e => set('recur_start_date', e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className={labelCls}>End Date *</label>
+                  <input
+                    type="date"
+                    className={inputCls}
+                    required
+                    value={form.recur_end_date}
+                    onChange={e => set('recur_end_date', e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className={labelCls}>Day of Week *</label>
+                <div className="relative">
+                  <select
+                    className={`${selCls} pr-8`}
+                    value={form.recur_day}
+                    onChange={e => set('recur_day', e.target.value)}
+                  >
+                    {DAYS_OF_WEEK.map(d => (
+                      <option key={d.value} value={d.value}>{d.label}</option>
+                    ))}
+                  </select>
+                  <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className={labelCls}>Class Start Time *</label>
+                  <input
+                    type="time"
+                    className={inputCls}
+                    required
+                    value={form.recur_start_time}
+                    onChange={e => set('recur_start_time', e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className={labelCls}>Class End Time *</label>
+                  <input
+                    type="time"
+                    className={inputCls}
+                    required
+                    value={form.recur_end_time}
+                    onChange={e => set('recur_end_time', e.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Published / Cancelled toggles */}
           <div className="flex gap-6 pt-1">
             <label className="flex items-center gap-2 cursor-pointer">
               <input
@@ -261,17 +585,48 @@ function EventModal({
               />
               <span className="font-heading text-xs uppercase tracking-widest text-gray-400">Published</span>
             </label>
-
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={form.is_cancelled}
-                onChange={e => set('is_cancelled', e.target.checked)}
-                className="w-4 h-4 accent-gym-red"
-              />
-              <span className="font-heading text-xs uppercase tracking-widest text-gray-400">Cancelled</span>
-            </label>
+            {editing && (
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={form.is_cancelled}
+                  onChange={e => set('is_cancelled', e.target.checked)}
+                  className="w-4 h-4 accent-gym-red"
+                />
+                <span className="font-heading text-xs uppercase tracking-widest text-gray-400">Cancelled</span>
+              </label>
+            )}
           </div>
+
+          {/* Edit scope — only shown when editing a series event */}
+          {editing && hasSeries && (
+            <div className="bg-gym-black border border-gym-charcoal-light p-4">
+              <p className="font-heading text-[11px] uppercase tracking-widest text-gray-500 mb-3">
+                Save scope *
+              </p>
+              <div className="flex flex-col gap-2.5">
+                {(
+                  [
+                    { v: 'this',   label: 'This event only'             },
+                    { v: 'future', label: 'All future events in series' },
+                    { v: 'all',    label: 'Entire series'               },
+                  ] as { v: EditScope; label: string }[]
+                ).map(opt => (
+                  <label key={opt.v} className="flex items-center gap-2.5 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="editScope"
+                      value={opt.v}
+                      checked={editScope === opt.v}
+                      onChange={() => setEditScope(opt.v)}
+                      className="accent-bee-yellow w-4 h-4"
+                    />
+                    <span className="font-body text-sm text-gray-300">{opt.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
 
           {error && (
             <div className="flex items-start gap-2 bg-gym-red/10 border border-gym-red/30 px-3 py-2.5">
@@ -302,37 +657,93 @@ function EventModal({
   );
 }
 
-function DeleteConfirm({ event, onClose, onDeleted }: { event: CalendarEvent; onClose: () => void; onDeleted: () => void }) {
+// ─── DeleteConfirm ────────────────────────────────────────────────────────────
+
+function DeleteConfirm({
+  event,
+  onClose,
+  onDeleted,
+}: {
+  event: CalendarEvent;
+  onClose: () => void;
+  onDeleted: () => void;
+}) {
+  const [scope, setScope]     = useState<EditScope>('this');
   const [deleting, setDeleting] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError]       = useState('');
+
+  const hasSeries = Boolean(event.series_id);
 
   const handleDelete = async () => {
     setDeleting(true);
-    const { error: dbErr } = await supabase.from('calendar_events').delete().eq('id', event.id);
-    if (dbErr) {
-      setError(dbErr.message);
-      setDeleting(false);
-    } else {
+    setError('');
+    try {
+      if (!hasSeries || scope === 'this') {
+        const { error: e } = await supabase
+          .from('calendar_events').delete().eq('id', event.id);
+        if (e) throw new Error(e.message);
+      } else if (scope === 'future') {
+        const { error: e } = await supabase
+          .from('calendar_events').delete()
+          .eq('series_id', event.series_id!)
+          .gte('start_time', event.start_time);
+        if (e) throw new Error(e.message);
+      } else {
+        const { error: e } = await supabase
+          .from('calendar_events').delete()
+          .eq('series_id', event.series_id!);
+        if (e) throw new Error(e.message);
+      }
       onDeleted();
+    } catch (ex: unknown) {
+      setError(ex instanceof Error ? ex.message : 'Delete failed.');
+      setDeleting(false);
     }
   };
 
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center px-4"
-      style={{ background: 'rgba(0,0,0,0.85)' }}
+      style={{ background: 'rgba(0,0,0,0.88)' }}
     >
       <div className="w-full max-w-sm bg-gym-charcoal border border-gym-charcoal-light">
         <div className="h-1 bg-gym-red" />
         <div className="px-6 py-6">
           <h2 className="font-display text-xl text-white uppercase mb-2">Delete Event?</h2>
-          <p className="font-body text-sm text-gray-400 mb-1">
-            This will permanently remove:
-          </p>
-          <p className="font-heading text-sm text-white uppercase tracking-wide mb-5">{event.title}</p>
-          {error && (
-            <p className="font-body text-sm text-red-400 mb-4">{error}</p>
+          <p className="font-body text-sm text-gray-400 mb-1">Permanently removing:</p>
+          <p className="font-heading text-sm text-white uppercase tracking-wide mb-4">{event.title}</p>
+
+          {hasSeries && (
+            <div className="mb-5">
+              <p className="font-heading text-[11px] uppercase tracking-widest text-gray-500 mb-2">
+                Delete scope *
+              </p>
+              <div className="flex flex-col gap-2.5">
+                {(
+                  [
+                    { v: 'this',   label: 'This event only'             },
+                    { v: 'future', label: 'All future events in series' },
+                    { v: 'all',    label: 'Entire series'               },
+                  ] as { v: EditScope; label: string }[]
+                ).map(opt => (
+                  <label key={opt.v} className="flex items-center gap-2.5 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="deleteScope"
+                      value={opt.v}
+                      checked={scope === opt.v}
+                      onChange={() => setScope(opt.v)}
+                      className="accent-gym-red w-4 h-4"
+                    />
+                    <span className="font-body text-sm text-gray-300">{opt.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
           )}
+
+          {error && <p className="font-body text-sm text-red-400 mb-4">{error}</p>}
+
           <div className="flex gap-3">
             <button
               onClick={handleDelete}
@@ -354,32 +765,21 @@ function DeleteConfirm({ event, onClose, onDeleted }: { event: CalendarEvent; on
   );
 }
 
-function formatEventDate(iso: string) {
-  const d = new Date(iso);
-  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-}
-
-function formatEventTime(iso: string) {
-  const d = new Date(iso);
-  return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
-}
+// ─── Main component ───────────────────────────────────────────────────────────
 
 export default function AdminCalendar() {
   const { session, loading: authLoading, user, signOut } = useAuth();
   const navigate = useNavigate();
 
-  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [events, setEvents]           = useState<CalendarEvent[]>([]);
   const [loadingEvents, setLoadingEvents] = useState(true);
-  const [fetchError, setFetchError] = useState('');
-
-  const [modalOpen, setModalOpen] = useState(false);
+  const [fetchError, setFetchError]   = useState('');
+  const [modalOpen, setModalOpen]     = useState(false);
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<CalendarEvent | null>(null);
 
   useEffect(() => {
-    if (!authLoading && !session) {
-      navigate('/admin/login', { replace: true });
-    }
+    if (!authLoading && !session) navigate('/admin/login', { replace: true });
   }, [session, authLoading, navigate]);
 
   const loadEvents = useCallback(async () => {
@@ -389,7 +789,6 @@ export default function AdminCalendar() {
       .from('calendar_events')
       .select('*')
       .order('start_time', { ascending: true });
-
     if (error) {
       setFetchError(error.message);
     } else {
@@ -398,35 +797,22 @@ export default function AdminCalendar() {
     setLoadingEvents(false);
   }, []);
 
-  useEffect(() => {
-    if (session) loadEvents();
-  }, [session, loadEvents]);
+  useEffect(() => { if (session) loadEvents(); }, [session, loadEvents]);
 
   const togglePublish = async (ev: CalendarEvent) => {
-    await supabase
-      .from('calendar_events')
-      .update({ is_published: !ev.is_published })
-      .eq('id', ev.id);
+    await supabase.from('calendar_events')
+      .update({ is_published: !ev.is_published }).eq('id', ev.id);
     loadEvents();
   };
 
   const toggleCancel = async (ev: CalendarEvent) => {
-    await supabase
-      .from('calendar_events')
-      .update({ is_cancelled: !ev.is_cancelled })
-      .eq('id', ev.id);
+    await supabase.from('calendar_events')
+      .update({ is_cancelled: !ev.is_cancelled }).eq('id', ev.id);
     loadEvents();
   };
 
-  const openCreate = () => {
-    setEditingEvent(null);
-    setModalOpen(true);
-  };
-
-  const openEdit = (ev: CalendarEvent) => {
-    setEditingEvent(ev);
-    setModalOpen(true);
-  };
+  const openCreate = () => { setEditingEvent(null); setModalOpen(true); };
+  const openEdit   = (ev: CalendarEvent) => { setEditingEvent(ev); setModalOpen(true); };
 
   if (authLoading) {
     return (
@@ -440,6 +826,7 @@ export default function AdminCalendar() {
 
   return (
     <div className="min-h-screen bg-gym-black" style={{ paddingTop: 80 }}>
+
       {/* Header */}
       <div className="bg-gym-charcoal border-b border-gym-charcoal-light">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between gap-4">
@@ -450,7 +837,6 @@ export default function AdminCalendar() {
               <p className="font-heading text-[10px] text-gray-600 uppercase tracking-widest mt-0.5">{user?.email}</p>
             </div>
           </div>
-
           <div className="flex items-center gap-3">
             <button
               onClick={openCreate}
@@ -470,7 +856,7 @@ export default function AdminCalendar() {
         </div>
       </div>
 
-      {/* Content */}
+      {/* Event list */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {loadingEvents ? (
           <div className="flex items-center justify-center py-20">
@@ -504,14 +890,15 @@ export default function AdminCalendar() {
         ) : (
           <div className="space-y-2">
             {events.map(ev => {
-              const color = TYPE_COLOR[ev.event_type as EventType] ?? '#6B7280';
+              const color     = TYPE_COLOR[ev.event_type] ?? '#6B7280';
+              const typeLabel = EVENT_TYPE_OPTS.find(o => o.value === ev.event_type)?.label ?? ev.event_type;
               return (
                 <div
                   key={ev.id}
-                  className="bg-gym-charcoal border border-gym-charcoal-light flex flex-col sm:flex-row sm:items-center gap-3 px-4 py-4 relative group"
+                  className="bg-gym-charcoal border border-gym-charcoal-light flex flex-col sm:flex-row sm:items-center gap-3 px-4 py-4"
                   style={{ borderLeft: `3px solid ${color}` }}
                 >
-                  {/* Status badges */}
+                  {/* Mobile badges */}
                   <div className="flex gap-1.5 shrink-0 sm:hidden mb-1">
                     {!ev.is_published && (
                       <span className="font-heading text-[9px] uppercase tracking-widest text-gray-600 border border-gym-charcoal-light px-1.5 py-0.5">Draft</span>
@@ -521,11 +908,11 @@ export default function AdminCalendar() {
                     )}
                   </div>
 
-                  {/* Date/Time */}
+                  {/* Date / Time */}
                   <div className="shrink-0 min-w-[130px]">
-                    <div className="font-heading text-xs text-gray-400 uppercase tracking-widest">{formatEventDate(ev.start_time)}</div>
+                    <div className="font-heading text-xs text-gray-400 uppercase tracking-widest">{fmtDate(ev.start_time)}</div>
                     <div className="font-display text-base text-white leading-tight">
-                      {formatEventTime(ev.start_time)} – {formatEventTime(ev.end_time)}
+                      {fmtTime(ev.start_time)} – {fmtTime(ev.end_time)}
                     </div>
                   </div>
 
@@ -538,7 +925,6 @@ export default function AdminCalendar() {
                       >
                         {ev.title}
                       </span>
-                      {/* Desktop badges */}
                       <div className="hidden sm:flex gap-1.5">
                         {!ev.is_published && (
                           <span className="font-heading text-[9px] uppercase tracking-widest text-gray-600 border border-gym-charcoal-light px-1.5 py-0.5">Draft</span>
@@ -546,14 +932,19 @@ export default function AdminCalendar() {
                         {ev.is_cancelled && (
                           <span className="font-heading text-[9px] uppercase tracking-widest text-gym-red border border-gym-red/30 px-1.5 py-0.5">Cancelled</span>
                         )}
+                        {ev.series_id && (
+                          <span className="font-heading text-[9px] uppercase tracking-widest text-gray-600 border border-gym-charcoal-light px-1.5 py-0.5 flex items-center gap-1">
+                            <RefreshCw size={8} />Series
+                          </span>
+                        )}
                       </div>
                     </div>
                     <div className="flex items-center gap-3 mt-0.5 flex-wrap">
                       <span className="font-heading text-[10px] uppercase tracking-widest" style={{ color }}>
-                        {EVENT_TYPE_OPTS.find(o => o.value === ev.event_type)?.label ?? ev.event_type}
+                        {typeLabel}
                       </span>
                       {ev.audience && ev.audience !== 'all' && (
-                        <span className="font-heading text-[10px] text-gray-600 uppercase tracking-widest">{ev.audience}</span>
+                        <span className="font-heading text-[10px] text-gray-600 uppercase tracking-widest capitalize">{ev.audience}</span>
                       )}
                       {ev.location && (
                         <span className="font-heading text-[10px] text-gray-600 uppercase tracking-widest">{ev.location}</span>
@@ -582,7 +973,7 @@ export default function AdminCalendar() {
                       title="Edit"
                       className="p-2 text-gray-600 hover:text-white transition-colors"
                     >
-                      <Edit2 size={16} />
+                      <Pencil size={16} />
                     </button>
                     <button
                       onClick={() => setDeleteTarget(ev)}
@@ -602,8 +993,8 @@ export default function AdminCalendar() {
       {modalOpen && (
         <EventModal
           editing={editingEvent}
-          onClose={() => setModalOpen(false)}
-          onSaved={() => { setModalOpen(false); loadEvents(); }}
+          onClose={() => { setModalOpen(false); setEditingEvent(null); }}
+          onSaved={() => { setModalOpen(false); setEditingEvent(null); loadEvents(); }}
         />
       )}
 

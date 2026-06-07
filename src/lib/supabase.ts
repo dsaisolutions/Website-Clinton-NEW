@@ -11,7 +11,7 @@ export interface CalendarEvent {
   id: string;
   title: string;
   description: string | null;
-  event_type: EventType;
+  event_type: string;
   audience: string;
   class_level: string;
   start_time: string;
@@ -19,6 +19,8 @@ export interface CalendarEvent {
   location: string | null;
   is_cancelled: boolean;
   is_published: boolean;
+  series_id: string | null;
+  created_by: string | null;
   created_at: string;
   updated_at: string;
 }
