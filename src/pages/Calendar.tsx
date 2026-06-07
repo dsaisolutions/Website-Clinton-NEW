@@ -1,88 +1,84 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { AlertCircle, RefreshCw } from 'lucide-react';
+import { supabase } from '../lib/supabase';
+import type { CalendarEvent, EventType } from '../lib/supabase';
 import CTASection from '../components/CTASection';
 
-const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Saturday'];
-const DAY_SHORT = ['MON', 'TUE', 'WED', 'THU', 'SAT'];
-
-// Evening slots (Mon–Thu view)
-const EVE_SLOTS = [
-  '4:30 PM', '5:00 PM', '5:30 PM',
-  '6:00 PM', '6:30 PM', '7:00 PM', '7:30 PM', '8:00 PM',
-];
-
-type ClassType = 'bjj' | 'mma' | 'wrestling' | 'open-mat' | 'kids';
-
-interface ClassBlock {
-  day: string;
-  startSlot: number; // index into EVE_SLOTS (Saturday uses a virtual offset)
-  span: number;
-  name: string;
-  type: ClassType;
-  detail: string;
-  displayTime: string;
-}
-
-const CLASSES: ClassBlock[] = [
-  { day: 'Monday',    startSlot: 1, span: 2, name: 'Kids Jiu Jitsu',  type: 'kids',      detail: 'Ages 5–14 · All levels',   displayTime: '5:00 PM' },
-  { day: 'Monday',    startSlot: 3, span: 2, name: 'Adult Jiu Jitsu', type: 'bjj',       detail: 'Gi & No-Gi · All levels',   displayTime: '6:00 PM' },
-  { day: 'Tuesday',   startSlot: 3, span: 2, name: 'MMA',             type: 'mma',       detail: 'Striking + Grappling',      displayTime: '6:00 PM' },
-  { day: 'Wednesday', startSlot: 1, span: 2, name: 'Kids Jiu Jitsu',  type: 'kids',      detail: 'Ages 5–14 · All levels',   displayTime: '5:00 PM' },
-  { day: 'Wednesday', startSlot: 3, span: 2, name: 'Adult Jiu Jitsu', type: 'bjj',       detail: 'Gi & No-Gi · All levels',   displayTime: '6:00 PM' },
-  { day: 'Thursday',  startSlot: 3, span: 2, name: 'Wrestling',       type: 'wrestling', detail: 'Folkstyle · Freestyle',     displayTime: '6:00 PM' },
-  { day: 'Saturday',  startSlot: 2, span: 2, name: 'Open Mat',        type: 'open-mat',  detail: 'All disciplines welcome',   displayTime: '10:00 AM' },
-];
-
-const TYPE_CFG: Record<ClassType, { accent: string; bg: string; text: string; label: string; border: string }> = {
+const TYPE_CFG: Record<EventType, { accent: string; bg: string; text: string; label: string; border: string }> = {
   bjj:        { accent: '#2563EB', bg: 'rgba(37,99,235,0.13)',  text: '#93C5FD', label: 'Jiu Jitsu', border: 'rgba(37,99,235,0.35)' },
   mma:        { accent: '#C41E1E', bg: 'rgba(196,30,30,0.14)',  text: '#FCA5A5', label: 'MMA',       border: 'rgba(196,30,30,0.45)' },
   wrestling:  { accent: '#D97706', bg: 'rgba(217,119,6,0.13)',  text: '#FCD34D', label: 'Wrestling', border: 'rgba(217,119,6,0.35)' },
   'open-mat': { accent: '#F5C400', bg: 'rgba(245,196,0,0.10)',  text: '#F5C400', label: 'Open Mat',  border: 'rgba(245,196,0,0.35)' },
   kids:       { accent: '#16A34A', bg: 'rgba(22,163,74,0.12)',  text: '#86EFAC', label: 'Kids',      border: 'rgba(22,163,74,0.35)' },
+  other:      { accent: '#6B7280', bg: 'rgba(107,114,128,0.12)', text: '#D1D5DB', label: 'Other',   border: 'rgba(107,114,128,0.35)' },
 };
 
-const LEGEND: ClassType[] = ['bjj', 'mma', 'wrestling', 'kids', 'open-mat'];
+const LEGEND_TYPES: EventType[] = ['bjj', 'mma', 'wrestling', 'kids', 'open-mat', 'other'];
 
-const ROW_H = 56; // px per 30-min slot
+function formatEventDate(iso: string) {
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+}
 
-function ClassPill({ block, active }: { block: ClassBlock; active: string | null }) {
-  const cfg = TYPE_CFG[block.type];
-  const dimmed = active !== null && active !== block.type;
-  return (
-    <div
-      className="absolute inset-x-0 inset-y-0 flex flex-col justify-center px-3 overflow-hidden transition-opacity"
-      style={{
-        background: cfg.bg,
-        borderLeft: `3px solid ${cfg.accent}`,
-        opacity: dimmed ? 0.12 : 1,
-      }}
-    >
-      {/* corner glow */}
-      <div
-        className="absolute top-0 right-0 w-12 h-full pointer-events-none"
-        style={{ background: `linear-gradient(to bottom-left, ${cfg.accent}30, transparent 70%)` }}
-      />
-      <span className="font-heading text-[10px] uppercase tracking-[0.2em] font-bold" style={{ color: cfg.accent }}>
-        {cfg.label}
-      </span>
-      <span className="font-display text-lg leading-tight uppercase" style={{ color: cfg.text }}>
-        {block.displayTime}
-      </span>
-      <span className="font-body text-[10px] text-gray-600 leading-tight mt-0.5 hidden sm:block">{block.detail}</span>
-    </div>
-  );
+function formatEventTime(iso: string) {
+  const d = new Date(iso);
+  return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+}
+
+function isSameDay(a: string, b: string) {
+  const da = new Date(a);
+  const db = new Date(b);
+  return da.getFullYear() === db.getFullYear() &&
+    da.getMonth() === db.getMonth() &&
+    da.getDate() === db.getDate();
+}
+
+function groupEventsByDay(events: CalendarEvent[]): { dateKey: string; events: CalendarEvent[] }[] {
+  const map = new Map<string, CalendarEvent[]>();
+  for (const ev of events) {
+    const d = new Date(ev.start_time);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    if (!map.has(key)) map.set(key, []);
+    map.get(key)!.push(ev);
+  }
+  return Array.from(map.entries()).map(([dateKey, evts]) => ({ dateKey, events: evts }));
 }
 
 export default function Calendar() {
-  const [active, setActive] = useState<string | null>(null);
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [activeFilter, setActiveFilter] = useState<EventType | null>(null);
 
-  const blocksForDay = (day: string) => CLASSES.filter(c => c.day === day);
+  const loadEvents = async () => {
+    setLoading(true);
+    setError('');
 
-  // For each day+slot: does a multi-slot block started above cover this row?
-  const isCovered = (day: string, slotIdx: number) =>
-    CLASSES.some(c => c.day === day && c.startSlot < slotIdx && c.startSlot + c.span > slotIdx);
+    const { data, error: dbErr } = await supabase
+      .from('calendar_events')
+      .select('*')
+      .eq('is_published', true)
+      .order('start_time', { ascending: true });
 
-  const blockStartingAt = (day: string, slotIdx: number) =>
-    CLASSES.find(c => c.day === day && c.startSlot === slotIdx);
+    if (dbErr) {
+      setError(dbErr.message);
+    } else {
+      setEvents((data as CalendarEvent[]) ?? []);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => { loadEvents(); }, []);
+
+  const filtered = activeFilter
+    ? events.filter(e => e.event_type === activeFilter)
+    : events;
+
+  const grouped = groupEventsByDay(filtered);
+
+  // Collect which event types are actually in the data for the legend
+  const presentTypes = Array.from(new Set(events.map(e => e.event_type as EventType)));
+  const legendTypes = LEGEND_TYPES.filter(t => presentTypes.includes(t));
 
   return (
     <>
@@ -117,33 +113,35 @@ export default function Calendar() {
             Contact the gym to confirm current times before showing up.
           </p>
 
-          {/* Legend / filter */}
-          <div className="flex flex-wrap gap-x-5 gap-y-3 mt-8 items-center">
-            <span className="font-heading text-xs uppercase tracking-widest text-gray-700">Filter:</span>
-            {LEGEND.map(t => {
-              const cfg = TYPE_CFG[t];
-              const isOn = active === t;
-              return (
-                <button
-                  key={t}
-                  onClick={() => setActive(isOn ? null : t)}
-                  className="flex items-center gap-2 group transition-opacity"
-                  style={{ opacity: active && !isOn ? 0.35 : 1 }}
-                >
-                  <span
-                    className="w-2 h-2 rotate-45 transition-transform group-hover:scale-125"
-                    style={{ background: cfg.accent, boxShadow: isOn ? `0 0 6px ${cfg.accent}` : 'none' }}
-                  />
-                  <span
-                    className="font-heading text-xs uppercase tracking-widest"
-                    style={{ color: isOn ? cfg.text : '#6B7280' }}
+          {/* Legend / filter — only show if we have events */}
+          {legendTypes.length > 0 && (
+            <div className="flex flex-wrap gap-x-5 gap-y-3 mt-8 items-center">
+              <span className="font-heading text-xs uppercase tracking-widest text-gray-700">Filter:</span>
+              {legendTypes.map(t => {
+                const cfg = TYPE_CFG[t];
+                const isOn = activeFilter === t;
+                return (
+                  <button
+                    key={t}
+                    onClick={() => setActiveFilter(isOn ? null : t)}
+                    className="flex items-center gap-2 group transition-opacity"
+                    style={{ opacity: activeFilter && !isOn ? 0.35 : 1 }}
                   >
-                    {cfg.label}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+                    <span
+                      className="w-2 h-2 rotate-45 transition-transform group-hover:scale-125"
+                      style={{ background: cfg.accent, boxShadow: isOn ? `0 0 6px ${cfg.accent}` : 'none' }}
+                    />
+                    <span
+                      className="font-heading text-xs uppercase tracking-widest"
+                      style={{ color: isOn ? cfg.text : '#6B7280' }}
+                    >
+                      {cfg.label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         <div
@@ -152,157 +150,155 @@ export default function Calendar() {
         />
       </section>
 
-      {/* ── TIMETABLE ──────────────────────────────────────────────── */}
-      <section className="bg-gym-charcoal py-10 md:py-14 overflow-x-auto">
-        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12" style={{ minWidth: 680 }}>
-
-          {/* Column headers */}
-          <div className="flex" style={{ marginLeft: 64 }}>
-            {DAYS.map((day, i) => (
-              <div
-                key={day}
-                className="flex-1 px-2 py-3 bg-gym-black relative"
-                style={{
-                  borderTop: `3px solid ${i === 4 ? '#F5C400' : '#C41E1E'}`,
-                  marginLeft: i > 0 ? 2 : 0,
-                }}
+      {/* ── SCHEDULE LIST ───────────────────────────────────────────── */}
+      <section className="bg-gym-charcoal py-10 md:py-14">
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+          {loading ? (
+            <div className="flex items-center justify-center py-24">
+              <div className="w-10 h-10 border-2 border-bee-yellow border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : error ? (
+            <div className="flex flex-col items-center py-20 gap-5">
+              <div className="flex items-start gap-3 bg-gym-red/10 border border-gym-red/30 px-6 py-4 max-w-lg w-full">
+                <AlertCircle size={18} className="text-gym-red shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-heading text-sm text-white uppercase tracking-wide">Could not load schedule</p>
+                  <p className="font-body text-sm text-gray-400 mt-1">{error}</p>
+                </div>
+              </div>
+              <button
+                onClick={loadEvents}
+                className="flex items-center gap-2 font-heading text-xs uppercase tracking-widest text-bee-yellow hover:text-bee-yellow-bright transition-colors"
               >
-                <div className="font-display text-2xl md:text-3xl leading-none text-white uppercase">{DAY_SHORT[i]}</div>
-                <div className="font-heading text-[10px] text-gray-700 uppercase tracking-widest mt-0.5 hidden sm:block">{day}</div>
-                <div className="absolute top-2.5 right-2 flex gap-1">
-                  {blocksForDay(day).map(c => (
-                    <span
-                      key={c.name}
-                      className="w-1 h-1 rounded-full"
-                      style={{ background: TYPE_CFG[c.type].accent }}
-                    />
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Grid rows */}
-          <div className="flex mt-0.5">
-            {/* Time axis */}
-            <div className="shrink-0" style={{ width: 64 }}>
-              {EVE_SLOTS.map((slot, i) => (
-                <div
-                  key={slot}
-                  className="flex items-start justify-end pr-3"
-                  style={{ height: ROW_H, paddingTop: 6 }}
+                <RefreshCw size={14} />
+                Try again
+              </button>
+            </div>
+          ) : grouped.length === 0 ? (
+            <div className="text-center py-24">
+              <div className="w-16 h-px bg-gym-charcoal-light mx-auto mb-8" />
+              <p className="font-display text-3xl text-white uppercase mb-3">
+                {activeFilter ? 'No matching classes' : 'Schedule Coming Soon'}
+              </p>
+              <p className="font-body text-gray-500 text-sm max-w-sm mx-auto">
+                {activeFilter
+                  ? 'No published events for this discipline.'
+                  : 'Check back soon or call the gym to confirm current class times.'}
+              </p>
+              {activeFilter && (
+                <button
+                  onClick={() => setActiveFilter(null)}
+                  className="mt-5 font-heading text-xs uppercase tracking-widest text-bee-yellow hover:text-bee-yellow-bright transition-colors"
                 >
-                  <span className="font-heading text-[10px] text-gray-700 uppercase tracking-wider whitespace-nowrap">
-                    {slot}
-                  </span>
-                </div>
-              ))}
-              {/* Saturday label at the bottom */}
-              <div className="flex items-center justify-end pr-3 pt-3 border-t border-gym-charcoal-light mt-0.5">
-                <span className="font-heading text-[10px] text-bee-yellow/60 uppercase tracking-wider">AM</span>
-              </div>
+                  Clear filter
+                </button>
+              )}
+              <div className="w-16 h-px bg-gym-charcoal-light mx-auto mt-8" />
             </div>
+          ) : (
+            <div className="space-y-10">
+              {grouped.map(({ dateKey, events: dayEvents }) => (
+                <div key={dateKey}>
+                  {/* Day header */}
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="w-1 h-6 bg-gym-red shrink-0" />
+                    <h2 className="font-heading text-sm uppercase tracking-widest text-white">
+                      {formatEventDate(dayEvents[0].start_time)}
+                    </h2>
+                    <div className="flex-1 h-px bg-gym-charcoal-light" />
+                  </div>
 
-            {/* Day columns */}
-            <div className="flex flex-1 gap-0.5">
-              {DAYS.map(day => (
-                <div key={day} className="flex-1 relative" style={{ marginLeft: 2 }}>
-                  {EVE_SLOTS.map((_, slotIdx) => {
-                    if (isCovered(day, slotIdx)) return null;
-                    const block = blockStartingAt(day, slotIdx);
-                    const spanHeight = block ? block.span * ROW_H + (block.span - 1) * 2 : ROW_H;
-
-                    return (
-                      <div
-                        key={slotIdx}
-                        className="relative"
-                        style={{
-                          height: spanHeight,
-                          marginBottom: 2,
-                          background: '#080808',
-                          borderLeft: block ? `3px solid ${TYPE_CFG[block.type].accent}` : '3px solid #1E1E1E',
-                        }}
-                      >
-                        {block && <ClassPill block={block} active={active} />}
-                      </div>
-                    );
-                  })}
-
-                  {/* Saturday morning slot — shown below the evening grid */}
-                  {day === 'Saturday' && (() => {
-                    const satBlock = CLASSES.find(c => c.day === 'Saturday');
-                    const cfg = satBlock ? TYPE_CFG[satBlock.type] : null;
-                    const dimmed = active !== null && satBlock && active !== satBlock.type;
-                    return (
-                      <div
-                        className="relative mt-0.5"
-                        style={{
-                          height: satBlock ? satBlock.span * ROW_H + (satBlock.span - 1) * 2 : ROW_H,
-                          background: '#080808',
-                          borderLeft: cfg ? `3px solid ${cfg.accent}` : '3px solid #2A2A2A',
-                          borderTop: '1px solid #2A2A2A',
-                        }}
-                      >
-                        {satBlock && cfg && (
-                          <div
-                            className="absolute inset-0 flex flex-col justify-center px-3 overflow-hidden transition-opacity"
-                            style={{ background: cfg.bg, opacity: dimmed ? 0.12 : 1 }}
-                          >
+                  {/* Event cards */}
+                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {dayEvents.map(ev => {
+                      const cfg = TYPE_CFG[ev.event_type as EventType] ?? TYPE_CFG.other;
+                      return (
+                        <div
+                          key={ev.id}
+                          className="relative overflow-hidden bg-gym-black"
+                          style={{
+                            borderLeft: `3px solid ${ev.is_cancelled ? '#374151' : cfg.accent}`,
+                            background: ev.is_cancelled ? 'rgba(8,8,8,0.5)' : cfg.bg,
+                            opacity: ev.is_cancelled ? 0.55 : 1,
+                          }}
+                        >
+                          {/* Corner glow */}
+                          {!ev.is_cancelled && (
                             <div
-                              className="absolute top-0 right-0 w-12 h-full pointer-events-none"
-                              style={{ background: `linear-gradient(to bottom-left, ${cfg.accent}30, transparent 70%)` }}
+                              className="absolute top-0 right-0 w-16 h-full pointer-events-none"
+                              style={{ background: `linear-gradient(to bottom-left, ${cfg.accent}25, transparent 70%)` }}
                             />
-                            <span className="font-heading text-[10px] uppercase tracking-[0.2em] font-bold" style={{ color: cfg.accent }}>
-                              {cfg.label}
-                            </span>
-                            <span className="font-display text-lg leading-tight uppercase" style={{ color: cfg.text }}>
-                              {satBlock.displayTime}
-                            </span>
-                            <span className="font-body text-[10px] text-gray-600 mt-0.5 hidden sm:block">{satBlock.detail}</span>
+                          )}
+
+                          <div className="relative px-4 py-4">
+                            <div className="flex items-start justify-between gap-2">
+                              <div>
+                                <span
+                                  className="font-heading text-[10px] uppercase tracking-[0.2em] font-bold block"
+                                  style={{ color: ev.is_cancelled ? '#6B7280' : cfg.accent }}
+                                >
+                                  {cfg.label}
+                                </span>
+                                <span
+                                  className={`font-display text-2xl leading-tight uppercase block mt-0.5 ${ev.is_cancelled ? 'line-through text-gray-600' : 'text-white'}`}
+                                >
+                                  {ev.title}
+                                </span>
+                              </div>
+                              {ev.is_cancelled && (
+                                <span className="font-heading text-[9px] uppercase tracking-widest text-gym-red border border-gym-red/30 px-1.5 py-0.5 shrink-0 mt-0.5">
+                                  Cancelled
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="flex items-center gap-2 mt-2">
+                              <span
+                                className="font-display text-lg leading-none"
+                                style={{ color: ev.is_cancelled ? '#6B7280' : cfg.text }}
+                              >
+                                {formatEventTime(ev.start_time)}
+                              </span>
+                              <span className="font-body text-xs text-gray-600">–</span>
+                              <span
+                                className="font-body text-xs"
+                                style={{ color: ev.is_cancelled ? '#6B7280' : '#9CA3AF' }}
+                              >
+                                {formatEventTime(ev.end_time)}
+                              </span>
+                            </div>
+
+                            {ev.class_level && ev.class_level !== 'all levels' ? (
+                              <p className="font-body text-[11px] text-gray-600 mt-1">{ev.class_level}</p>
+                            ) : null}
+                            {ev.audience && ev.audience !== 'all' ? (
+                              <p className="font-body text-[11px] text-gray-600">{ev.audience}</p>
+                            ) : null}
+                            {ev.description ? (
+                              <p className="font-body text-[11px] text-gray-600 mt-1 line-clamp-2">{ev.description}</p>
+                            ) : null}
+                            {ev.location ? (
+                              <p className="font-body text-[10px] text-gray-700 mt-1.5 uppercase tracking-wider">{ev.location}</p>
+                            ) : null}
                           </div>
-                        )}
-                      </div>
-                    );
-                  })()}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               ))}
             </div>
-          </div>
-
-          {/* Bottom rule */}
-          <div className="mt-0.5 h-0.5 bg-gym-charcoal-light" style={{ marginLeft: 64 }} />
+          )}
         </div>
       </section>
 
-      {/* ── STATS + CONTACT STRIP ───────────────────────────────────── */}
+      {/* ── CONTACT STRIP ──────────────────────────────────────────── */}
       <section className="bg-gym-black border-t border-gym-charcoal-light">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 py-10">
           <div className="flex flex-col md:flex-row gap-8 items-start md:items-center justify-between">
-
-            {/* Discipline counts */}
-            <div className="flex flex-wrap gap-5">
-              {LEGEND.map(t => {
-                const cfg = TYPE_CFG[t];
-                const count = CLASSES.filter(c => c.type === t).length * 2;
-                if (!count) return null;
-                return (
-                  <div key={t} className="flex items-center gap-3">
-                    <div
-                      className="w-10 h-10 flex items-center justify-center font-display text-xl"
-                      style={{ background: cfg.bg, border: `1px solid ${cfg.border}`, color: cfg.text }}
-                    >
-                      {count}
-                    </div>
-                    <div>
-                      <div className="font-heading text-xs uppercase tracking-widest" style={{ color: cfg.text }}>{cfg.label}</div>
-                      <div className="font-body text-[10px] text-gray-700">classes / week</div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Phone */}
+            <p className="font-body text-gray-600 text-sm max-w-lg">
+              Schedule is updated regularly. Call the gym to confirm current class times.
+            </p>
             <div className="flex items-center gap-4 border border-gym-charcoal-light px-5 py-4 shrink-0">
               <div>
                 <p className="font-heading text-white uppercase tracking-wide text-sm">Questions?</p>
@@ -316,10 +312,6 @@ export default function Calendar() {
               </a>
             </div>
           </div>
-
-          <p className="font-body text-gray-800 text-xs mt-6 max-w-lg">
-            Schedule is a placeholder and will be updated. Contact the gym to confirm current class times.
-          </p>
         </div>
       </section>
 
