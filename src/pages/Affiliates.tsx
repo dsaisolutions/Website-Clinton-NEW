@@ -264,6 +264,3 @@ export default function Affiliates() {
     </>
   );
 }
-
-
-export default Affiliates
