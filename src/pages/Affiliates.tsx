@@ -15,8 +15,60 @@ interface Affiliate {
   mapUrl: string;
 }
 
-// TODO: Replace with real affiliate data when available
-const affiliates: Affiliate[] = [];
+const affiliates: Affiliate[] = [
+  {
+    schoolName: 'Black Sails MMA',
+    logo: 'https://files.gymdesk.com/11897/logo.jpg',
+    contactName: '',
+    phone: '601-209-7014',
+    email: 'blacksailsmma2015@gmail.com',
+    website: 'https://blacksailsmma.com/',
+    streetAddress: '2625 Courthouse Cir',
+    city: 'Flowood',
+    state: 'MS',
+    zip: '39232',
+    mapUrl: 'https://www.google.com/maps/search/?api=1&query=2625+Courthouse+Cir+Flowood+MS+39232',
+  },
+  {
+    schoolName: 'Next Level Combat',
+    logo: null, // TODO: Add logo URL — site unavailable at build time
+    contactName: '',
+    phone: '601-821-2540',
+    email: '',
+    website: 'https://nlcofms.com/',
+    streetAddress: '111 Fairmont Plaza',
+    city: 'Pearl',
+    state: 'MS',
+    zip: '39208',
+    mapUrl: 'https://www.google.com/maps/search/?api=1&query=111+Fairmont+Plaza+Pearl+MS+39208',
+  },
+  {
+    schoolName: 'Primal MMA - Forrest',
+    logo: 'https://static.wixstatic.com/media/224a41_df2d1f45cb654013bb55f1419103c4a8~mv2.png',
+    contactName: '',
+    phone: '(601) 507-1844',
+    email: 'primalmma1993@gmail.com',
+    website: 'https://www.primalmmakbjj.com/',
+    streetAddress: '306 S Main St',
+    city: 'Forest',
+    state: 'MS',
+    zip: '39074',
+    mapUrl: 'https://www.google.com/maps/search/?api=1&query=306+S+Main+St+Forest+MS+39074',
+  },
+  {
+    schoolName: 'Primal MMA - Mendenhall',
+    logo: null, // TODO: Add logo URL — site unavailable at build time
+    contactName: '',
+    phone: '(601) 230-5050',
+    email: 'info@primalfitmma.com',
+    website: 'https://www.primalfitmma.com/',
+    streetAddress: '3661 Simpson Hwy 49',
+    city: 'Mendenhall',
+    state: 'MS',
+    zip: '39114',
+    mapUrl: 'https://www.google.com/maps/search/?api=1&query=3661+Simpson+Hwy+49+Mendenhall+MS+39114',
+  },
+];
 
 function AffiliateRow({ affiliate: a }: { affiliate: Affiliate }) {
   const fullAddress = `${a.streetAddress}, ${a.city}, ${a.state} ${a.zip}`;
@@ -212,3 +264,6 @@ export default function Affiliates() {
     </>
   );
 }
+
+
+export default Affiliates
