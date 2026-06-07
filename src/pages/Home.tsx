@@ -175,16 +175,28 @@ export default function Home() {
 
                   {/* Card face */}
                   <div
-                    className="relative overflow-hidden border-4 border-bee-yellow"
+                    className="relative overflow-hidden border-2 border-bee-yellow"
                     style={{ clipPath: 'polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 0 100%)' }}
                   >
                     {/* Red top accent */}
                     <div className="absolute top-0 left-0 right-0 z-20" style={{ height: '3px', background: '#C41E1E' }} />
 
-                    {/* Clean dark card background — no pattern here */}
-                    <div className="absolute inset-0 z-0" style={{ background: '#111111' }} />
+                    {/* Dark textured background */}
+                    <div
+                      className="absolute inset-0 z-0"
+                      style={{
+                        background: '#0c0c0c',
+                        backgroundImage: `repeating-linear-gradient(
+                          -45deg,
+                          transparent 0px,
+                          transparent 9px,
+                          rgba(245,196,0,0.03) 9px,
+                          rgba(245,196,0,0.03) 10px
+                        )`,
+                      }}
+                    />
 
-                    {/* Bear image + overlays scoped to image area only */}
+                    {/* Bear image */}
                     <div className="relative z-10">
                       <img
                         src={bearImg}
@@ -192,31 +204,8 @@ export default function Home() {
                         className="w-full h-auto block"
                         style={{ filter: 'contrast(1.18) brightness(1.04)' }}
                       />
-                      {/*
-                        Honeycomb overlay using multiply blend mode.
-                        multiply: dark hexagon strokes darken the gray badge area;
-                        on the black bear outline/fur they multiply to black = invisible.
-                        This naturally confines the pattern to the gray badge shape.
-                      */}
                       <div
-                        className="absolute inset-0 pointer-events-none"
-                        style={{
-                          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='32'%3E%3Cpolygon points='14,2 26,9 26,23 14,30 2,23 2,9' fill='white' stroke='rgba(0,0,0,0.55)' stroke-width='1.3'/%3E%3C/svg%3E")`,
-                          backgroundSize: '28px 32px',
-                          mixBlendMode: 'multiply',
-                          opacity: 0.9,
-                        }}
-                      />
-                      {/* Subtle warm lift centered on the badge — soft-light keeps it restrained */}
-                      <div
-                        className="absolute inset-0 pointer-events-none"
-                        style={{
-                          background: 'radial-gradient(ellipse 60% 52% at 50% 42%, rgba(245,196,0,0.18) 0%, transparent 68%)',
-                          mixBlendMode: 'soft-light',
-                        }}
-                      />
-                      <div
-                        className="absolute bottom-0 left-0 right-0 pointer-events-none"
+                        className="absolute bottom-0 left-0 right-0 pointer-events-none z-10"
                         style={{ height: '35%', background: 'linear-gradient(to top, rgba(245,196,0,0.14) 0%, transparent 100%)' }}
                       />
                     </div>
