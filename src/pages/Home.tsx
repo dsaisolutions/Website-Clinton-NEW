@@ -175,24 +175,30 @@ export default function Home() {
 
                   {/* Card face */}
                   <div
-                    className="relative overflow-hidden border-2 border-bee-yellow"
+                    className="relative overflow-hidden border-4 border-bee-yellow"
                     style={{ clipPath: 'polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 0 100%)' }}
                   >
                     {/* Red top accent */}
                     <div className="absolute top-0 left-0 right-0 z-20" style={{ height: '3px', background: '#C41E1E' }} />
 
-                    {/* Dark textured background */}
+                    {/* Gray background with honeycomb pattern */}
+                    <div
+                      className="absolute inset-0 z-0"
+                      style={{ background: '#3a3a3a' }}
+                    />
+                    {/* Honeycomb SVG pattern overlay */}
                     <div
                       className="absolute inset-0 z-0"
                       style={{
-                        background: '#0c0c0c',
-                        backgroundImage: `repeating-linear-gradient(
-                          -45deg,
-                          transparent 0px,
-                          transparent 9px,
-                          rgba(245,196,0,0.03) 9px,
-                          rgba(245,196,0,0.03) 10px
-                        )`,
+                        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='32'%3E%3Cpolygon points='14,2 26,9 26,23 14,30 2,23 2,9' fill='none' stroke='rgba(0,0,0,0.28)' stroke-width='1.2'/%3E%3C/svg%3E")`,
+                        backgroundSize: '28px 32px',
+                      }}
+                    />
+                    {/* Subtle yellow center glow so the black card border reads clearly */}
+                    <div
+                      className="absolute inset-0 z-0 pointer-events-none"
+                      style={{
+                        background: 'radial-gradient(ellipse 70% 60% at 50% 45%, rgba(245,196,0,0.10) 0%, transparent 75%)',
                       }}
                     />
 
