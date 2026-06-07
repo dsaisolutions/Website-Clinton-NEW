@@ -765,6 +765,76 @@ function DeleteConfirm({
   );
 }
 
+// ─── Admin display grouping ───────────────────────────────────────────────────
+
+const DOW_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+function fmtShortDate(iso: string) {
+  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+const AUDIENCE_LABEL: Record<string, string> = {
+  all: 'All', adults: 'Adults', kids: 'Kids', women: 'Women',
+};
+const LEVEL_LABEL: Record<string, string> = {
+  'all levels': 'All Levels', wrestling: 'Wrestling', gi: 'Gi',
+  'no gi': 'No Gi', mma: 'MMA', 'open mat': 'Open Mat',
+};
+
+interface DisplayRow {
+  /** Representative CalendarEvent (first occurrence for series, the event itself for singles) */
+  rep: CalendarEvent;
+  isSeries: boolean;
+  seriesStart: string; // ISO — earliest start_time in series
+  seriesEnd: string;   // ISO — latest start_time in series
+  dowName: string;     // day-of-week name (series only)
+  count: number;       // number of occurrences in series
+}
+
+function buildDisplayRows(events: CalendarEvent[]): DisplayRow[] {
+  const seriesMap = new Map<string, CalendarEvent[]>();
+  const singles: CalendarEvent[] = [];
+
+  for (const ev of events) {
+    if (ev.series_id) {
+      if (!seriesMap.has(ev.series_id)) seriesMap.set(ev.series_id, []);
+      seriesMap.get(ev.series_id)!.push(ev);
+    } else {
+      singles.push(ev);
+    }
+  }
+
+  const rows: DisplayRow[] = [];
+
+  // Series rows — one per series_id
+  for (const [, occurrences] of seriesMap) {
+    const sorted = [...occurrences].sort(
+      (a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime(),
+    );
+    const rep        = sorted[0];
+    const last       = sorted[sorted.length - 1];
+    const dowName    = DOW_NAMES[new Date(rep.start_time).getDay()];
+    rows.push({
+      rep,
+      isSeries:    true,
+      seriesStart: rep.start_time,
+      seriesEnd:   last.start_time,
+      dowName,
+      count:       sorted.length,
+    });
+  }
+
+  // Single-event rows
+  for (const ev of singles) {
+    rows.push({ rep: ev, isSeries: false, seriesStart: ev.start_time, seriesEnd: ev.end_time, dowName: '', count: 1 });
+  }
+
+  // Sort display rows by their representative start_time
+  rows.sort((a, b) => new Date(a.rep.start_time).getTime() - new Date(b.rep.start_time).getTime());
+
+  return rows;
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function AdminCalendar() {
@@ -889,65 +959,72 @@ export default function AdminCalendar() {
           </div>
         ) : (
           <div className="space-y-2">
-            {events.map(ev => {
+            {buildDisplayRows(events).map(({ rep: ev, isSeries, seriesStart, seriesEnd, dowName, count }) => {
               const color     = TYPE_COLOR[ev.event_type] ?? '#6B7280';
               const typeLabel = EVENT_TYPE_OPTS.find(o => o.value === ev.event_type)?.label ?? ev.event_type;
+              const audLabel  = AUDIENCE_LABEL[ev.audience] ?? ev.audience;
+              const lvlLabel  = LEVEL_LABEL[ev.class_level] ?? ev.class_level;
               return (
                 <div
-                  key={ev.id}
+                  key={isSeries ? `series-${ev.series_id}` : ev.id}
                   className="bg-gym-charcoal border border-gym-charcoal-light flex flex-col sm:flex-row sm:items-center gap-3 px-4 py-4"
                   style={{ borderLeft: `3px solid ${color}` }}
                 >
-                  {/* Mobile badges */}
-                  <div className="flex gap-1.5 shrink-0 sm:hidden mb-1">
-                    {!ev.is_published && (
-                      <span className="font-heading text-[9px] uppercase tracking-widest text-gray-600 border border-gym-charcoal-light px-1.5 py-0.5">Draft</span>
+                  {/* Date / time block */}
+                  <div className="shrink-0 min-w-[150px]">
+                    {isSeries ? (
+                      <>
+                        <div className="font-heading text-xs text-gray-400 uppercase tracking-widest">
+                          Repeats Weekly · {dowName}
+                        </div>
+                        <div className="font-display text-base text-white leading-tight">
+                          {fmtTime(ev.start_time)} – {fmtTime(ev.end_time)}
+                        </div>
+                        <div className="font-heading text-[10px] text-gray-600 uppercase tracking-widest mt-0.5">
+                          {fmtShortDate(seriesStart)} – {fmtShortDate(seriesEnd)}
+                          <span className="ml-2 text-gray-700">{count} classes</span>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="font-heading text-xs text-gray-400 uppercase tracking-widest">{fmtDate(ev.start_time)}</div>
+                        <div className="font-display text-base text-white leading-tight">
+                          {fmtTime(ev.start_time)} – {fmtTime(ev.end_time)}
+                        </div>
+                      </>
                     )}
-                    {ev.is_cancelled && (
-                      <span className="font-heading text-[9px] uppercase tracking-widest text-gym-red border border-gym-red/30 px-1.5 py-0.5">Cancelled</span>
-                    )}
-                  </div>
-
-                  {/* Date / Time */}
-                  <div className="shrink-0 min-w-[130px]">
-                    <div className="font-heading text-xs text-gray-400 uppercase tracking-widest">{fmtDate(ev.start_time)}</div>
-                    <div className="font-display text-base text-white leading-tight">
-                      {fmtTime(ev.start_time)} – {fmtTime(ev.end_time)}
-                    </div>
                   </div>
 
                   {/* Title + meta */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span
-                        className={`font-display text-lg leading-tight uppercase ${ev.is_cancelled ? 'line-through opacity-50' : ''}`}
-                        style={{ color: ev.is_cancelled ? '#6B7280' : 'white' }}
-                      >
+                      <span className="font-display text-lg leading-tight uppercase text-white">
                         {ev.title}
                       </span>
-                      <div className="hidden sm:flex gap-1.5">
+                      <div className="flex gap-1.5 flex-wrap">
                         {!ev.is_published && (
                           <span className="font-heading text-[9px] uppercase tracking-widest text-gray-600 border border-gym-charcoal-light px-1.5 py-0.5">Draft</span>
                         )}
                         {ev.is_cancelled && (
                           <span className="font-heading text-[9px] uppercase tracking-widest text-gym-red border border-gym-red/30 px-1.5 py-0.5">Cancelled</span>
                         )}
-                        {ev.series_id && (
+                        {isSeries && (
                           <span className="font-heading text-[9px] uppercase tracking-widest text-gray-600 border border-gym-charcoal-light px-1.5 py-0.5 flex items-center gap-1">
                             <RefreshCw size={8} />Series
                           </span>
                         )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-3 mt-0.5 flex-wrap">
-                      <span className="font-heading text-[10px] uppercase tracking-widest" style={{ color }}>
-                        {typeLabel}
-                      </span>
-                      {ev.audience && ev.audience !== 'all' && (
-                        <span className="font-heading text-[10px] text-gray-600 uppercase tracking-widest capitalize">{ev.audience}</span>
+                    <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                      <span className="font-heading text-[10px] uppercase tracking-widest" style={{ color }}>{typeLabel}</span>
+                      {ev.audience && (
+                        <span className="font-heading text-[10px] text-gray-600 uppercase tracking-widest">· {audLabel}</span>
+                      )}
+                      {ev.class_level && (
+                        <span className="font-heading text-[10px] text-gray-600 uppercase tracking-widest">· {lvlLabel}</span>
                       )}
                       {ev.location && (
-                        <span className="font-heading text-[10px] text-gray-600 uppercase tracking-widest">{ev.location}</span>
+                        <span className="font-heading text-[10px] text-gray-600 uppercase tracking-widest">· {ev.location}</span>
                       )}
                     </div>
                   </div>
