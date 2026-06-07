@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import Layout from './components/Layout';
+import ScrollToTop from './components/ScrollToTop';
 import Home from './pages/Home';
 import Instructors from './pages/Instructors';
 import Calendar from './pages/Calendar';
@@ -16,6 +17,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <ScrollToTop />
         <Routes>
           <Route path="/" element={<PublicLayout><Home /></PublicLayout>} />
           <Route path="/instructors" element={<PublicLayout><Instructors /></PublicLayout>} />
