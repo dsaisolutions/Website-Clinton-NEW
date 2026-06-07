@@ -427,10 +427,10 @@ function EventModal({
             </div>
           </div>
 
-          {/* Class Level / Location */}
+          {/* Discipline / Location */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className={labelCls}>Class Level</label>
+              <label className={labelCls}>Discipline</label>
               <div className="relative">
                 <select
                   className={`${selCls} pr-8`}
