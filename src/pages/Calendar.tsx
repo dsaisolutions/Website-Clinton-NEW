@@ -235,7 +235,7 @@ function EventModal({ event, onClose }: { event: CalendarEvent; onClose: () => v
               <div className="flex items-start gap-2">
                 <BarChart2 size={13} className="text-gray-600 mt-0.5 shrink-0" />
                 <div>
-                  <p className="font-heading text-[10px] uppercase tracking-widest text-gray-600">Level</p>
+                  <p className="font-heading text-[10px] uppercase tracking-widest text-gray-600">Discipline</p>
                   <p className="font-body text-sm text-white">{fmtLevel(event.class_level)}</p>
                 </div>
               </div>
