@@ -1,22 +1,85 @@
 import { useEffect, useState, useCallback } from 'react';
 import { ChevronLeft, ChevronRight, X, MapPin, Users, BarChart2, Clock, AlertTriangle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import type { CalendarEvent, EventType } from '../lib/supabase';
+import type { CalendarEvent } from '../lib/supabase';
 import CTASection from '../components/CTASection';
 
 // ─── Colour config ────────────────────────────────────────────────────────────
 
-const TYPE_CFG: Record<EventType, { accent: string; bg: string; text: string; label: string }> = {
-  bjj:        { accent: '#2563EB', bg: 'rgba(37,99,235,0.18)',  text: '#93C5FD', label: 'Jiu Jitsu' },
-  mma:        { accent: '#C41E1E', bg: 'rgba(196,30,30,0.18)',  text: '#FCA5A5', label: 'MMA'       },
-  wrestling:  { accent: '#D97706', bg: 'rgba(217,119,6,0.18)',  text: '#FCD34D', label: 'Wrestling' },
-  'open-mat': { accent: '#F5C400', bg: 'rgba(245,196,0,0.14)',  text: '#F5C400', label: 'Open Mat'  },
-  kids:       { accent: '#16A34A', bg: 'rgba(22,163,74,0.16)',  text: '#86EFAC', label: 'Kids'      },
-  other:      { accent: '#6B7280', bg: 'rgba(107,114,128,0.14)', text: '#D1D5DB', label: 'Other'   },
+type DisciplineKey =
+  | 'gi'
+  | 'no gi'
+  | 'mma'
+  | 'wrestling'
+  | 'open mat'
+  | 'workshop'
+  | 'other';
+
+const TYPE_CFG: Record<DisciplineKey, { accent: string; bg: string; text: string; label: string }> = {
+  gi: {
+    accent: '#2563EB',
+    bg: 'rgba(37,99,235,0.18)',
+    text: '#93C5FD',
+    label: 'Gi',
+  },
+  'no gi': {
+    accent: '#16A34A',
+    bg: 'rgba(22,163,74,0.16)',
+    text: '#86EFAC',
+    label: 'No Gi',
+  },
+  mma: {
+    accent: '#C41E1E',
+    bg: 'rgba(196,30,30,0.18)',
+    text: '#FCA5A5',
+    label: 'MMA',
+  },
+  wrestling: {
+    accent: '#D97706',
+    bg: 'rgba(217,119,6,0.18)',
+    text: '#FCD34D',
+    label: 'Wrestling',
+  },
+  'open mat': {
+    accent: '#F5C400',
+    bg: 'rgba(245,196,0,0.14)',
+    text: '#F5C400',
+    label: 'Open Mat',
+  },
+  workshop: {
+    accent: '#A855F7',
+    bg: 'rgba(168,85,247,0.16)',
+    text: '#D8B4FE',
+    label: 'Workshop',
+  },
+  other: {
+    accent: '#6B7280',
+    bg: 'rgba(107,114,128,0.14)',
+    text: '#D1D5DB',
+    label: 'Other',
+  },
 };
 
-function cfg(type: string) {
-  return TYPE_CFG[type as EventType] ?? TYPE_CFG.other;
+function disciplineKey(event: CalendarEvent): DisciplineKey {
+  if (event.event_type === 'workshop') return 'workshop';
+
+  const level = event.class_level?.toLowerCase();
+
+  if (
+    level === 'gi' ||
+    level === 'no gi' ||
+    level === 'mma' ||
+    level === 'wrestling' ||
+    level === 'open mat'
+  ) {
+    return level;
+  }
+
+  return 'other';
+}
+
+function cfg(event: CalendarEvent) {
+  return TYPE_CFG[disciplineKey(event)] ?? TYPE_CFG.other;
 }
 
 // ─── Date helpers ─────────────────────────────────────────────────────────────
@@ -96,7 +159,7 @@ function groupByDate(events: CalendarEvent[]): Map<string, CalendarEvent[]> {
 // ─── Event detail modal ───────────────────────────────────────────────────────
 
 function EventModal({ event, onClose }: { event: CalendarEvent; onClose: () => void }) {
-  const c = cfg(event.event_type);
+  const c = cfg(event);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -206,7 +269,7 @@ function EventModal({ event, onClose }: { event: CalendarEvent; onClose: () => v
 // ─── Pill shown in a grid cell ─────────────────────────────────────────────────
 
 function EventPill({ event, onClick }: { event: CalendarEvent; onClick: () => void }) {
-  const c = cfg(event.event_type);
+  const c = cfg(event);
   return (
     <button
       onClick={onClick}
@@ -229,7 +292,7 @@ function EventPill({ event, onClick }: { event: CalendarEvent; onClick: () => vo
 // ─── Agenda item (mobile) ─────────────────────────────────────────────────────
 
 function AgendaEvent({ event, onClick }: { event: CalendarEvent; onClick: () => void }) {
-  const c = cfg(event.event_type);
+  const c = cfg(event);
   return (
     <button
       onClick={onClick}
@@ -471,6 +534,7 @@ export default function Calendar() {
                     const dayEvents = byDate.get(key) ?? [];
                     const isToday = key === todayKey;
                     const hasDot = dayEvents.length > 0;
+                    const firstActiveEvent = dayEvents.find(e => !e.is_cancelled);
 
                     return (
                       <div key={key}
@@ -480,9 +544,7 @@ export default function Calendar() {
                         </span>
                         {hasDot && (
                           <span className="w-1 h-1 rounded-full" style={{
-                            background: dayEvents.some(e => !e.is_cancelled)
-                              ? (cfg(dayEvents.find(e => !e.is_cancelled)!.event_type).accent)
-                              : '#4B5563',
+                            background: firstActiveEvent ? cfg(firstActiveEvent).accent : '#4B5563',
                           }} />
                         )}
                       </div>
@@ -541,8 +603,8 @@ export default function Calendar() {
           {!loading && !error && events.length > 0 && (
             <div className="flex flex-wrap gap-x-5 gap-y-2 mt-6 pt-5 border-t border-gym-charcoal-light">
               <span className="font-heading text-[10px] uppercase tracking-widest text-gray-700 self-center">Discipline:</span>
-              {(Object.entries(TYPE_CFG) as [EventType, typeof TYPE_CFG[EventType]][])
-                .filter(([t]) => events.some(ev => ev.event_type === t))
+              {(Object.entries(TYPE_CFG) as [DisciplineKey, typeof TYPE_CFG[DisciplineKey]][])
+                .filter(([t]) => t !== 'other' && events.some(ev => disciplineKey(ev) === t))
                 .map(([t, c]) => (
                   <div key={t} className="flex items-center gap-1.5">
                     <span className="w-2 h-2 rotate-45 inline-block" style={{ background: c.accent }} />
