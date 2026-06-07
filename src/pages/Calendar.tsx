@@ -59,6 +59,27 @@ const MONTH_NAMES = [
 const DOW_FULL  = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 const DOW_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
+// ─── Display formatters ───────────────────────────────────────────────────────
+
+const AUDIENCE_LABELS: Record<string, string> = {
+  kids: 'Kids',
+  adults: 'Adults',
+  all: 'All',
+  women: 'Women',
+};
+
+const LEVEL_LABELS: Record<string, string> = {
+  wrestling: 'Wrestling',
+  gi: 'Gi',
+  'no gi': 'No Gi',
+  mma: 'MMA',
+  'open mat': 'Open Mat',
+  'all levels': 'All Levels',
+};
+
+function fmtAudience(v: string) { return AUDIENCE_LABELS[v] ?? v; }
+function fmtLevel(v: string)    { return LEVEL_LABELS[v]    ?? v; }
+
 // ─── Event grouping ───────────────────────────────────────────────────────────
 
 function groupByDate(events: CalendarEvent[]): Map<string, CalendarEvent[]> {
@@ -143,7 +164,7 @@ function EventModal({ event, onClose }: { event: CalendarEvent; onClose: () => v
                 <Users size={13} className="text-gray-600 mt-0.5 shrink-0" />
                 <div>
                   <p className="font-heading text-[10px] uppercase tracking-widest text-gray-600">Audience</p>
-                  <p className="font-body text-sm text-white capitalize">{event.audience}</p>
+                  <p className="font-body text-sm text-white">{fmtAudience(event.audience)}</p>
                 </div>
               </div>
             )}
@@ -152,7 +173,7 @@ function EventModal({ event, onClose }: { event: CalendarEvent; onClose: () => v
                 <BarChart2 size={13} className="text-gray-600 mt-0.5 shrink-0" />
                 <div>
                   <p className="font-heading text-[10px] uppercase tracking-widest text-gray-600">Level</p>
-                  <p className="font-body text-sm text-white capitalize">{event.class_level}</p>
+                  <p className="font-body text-sm text-white">{fmtLevel(event.class_level)}</p>
                 </div>
               </div>
             )}
@@ -230,7 +251,7 @@ function AgendaEvent({ event, onClick }: { event: CalendarEvent; onClick: () => 
         <span className="font-heading text-xs text-gray-500 mt-0.5 block">
           {formatTime(event.start_time)} – {formatTime(event.end_time)}
           {event.class_level && event.class_level !== 'all levels' && (
-            <span className="ml-2 text-gray-600">{event.class_level}</span>
+            <span className="ml-2 text-gray-600">{fmtLevel(event.class_level)}</span>
           )}
         </span>
       </div>
