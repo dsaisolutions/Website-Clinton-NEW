@@ -108,20 +108,27 @@ export default function Contact() {
                 </div>
               </div>
 
-              {/* Map placeholder */}
-              <div className="border-2 border-gym-charcoal-light bg-gym-charcoal-mid h-52 flex items-center justify-center relative overflow-hidden">
-                <div
-                  className="absolute inset-0 opacity-[0.04]"
-                  style={{
-                    backgroundImage: 'repeating-linear-gradient(-45deg, #F5C400 0, #F5C400 1px, transparent 0, transparent 14px)',
-                    backgroundSize: '20px 20px',
-                  }}
+              {/* Map */}
+              <div className="border-2 border-gym-charcoal-light overflow-hidden">
+                <iframe
+                  title="Killer Bees Clinton location"
+                  src="https://www.google.com/maps?q=408+Cynthia+St,+Clinton,+MS+39056&output=embed"
+                  width="100%"
+                  height="220"
+                  style={{ border: 0, display: 'block' }}
+                  allowFullScreen
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
                 />
-                <div className="relative flex flex-col items-center gap-2">
-                  <MapPin size={28} strokeWidth={1} className="text-gray-700" />
-                  <span className="font-heading text-sm uppercase tracking-widest text-gray-600">Map Coming Soon</span>
-                  <span className="font-body text-xs text-gray-700">Clinton, Mississippi</span>
-                </div>
+                <a
+                  href="https://www.google.com/maps/search/?api=1&query=408+Cynthia+St+Clinton+MS+39056"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 bg-gym-charcoal border-t-2 border-gym-charcoal-light py-3 font-heading text-xs uppercase tracking-widest text-gray-400 hover:text-bee-yellow hover:border-bee-yellow transition-colors"
+                >
+                  <MapPin size={13} />
+                  Get Directions — Killer Bees Clinton
+                </a>
               </div>
             </div>
 
