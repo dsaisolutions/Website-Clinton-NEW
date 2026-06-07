@@ -6,6 +6,7 @@ import Home from './pages/Home';
 import Instructors from './pages/Instructors';
 import Calendar from './pages/Calendar';
 import Contact from './pages/Contact';
+import Affiliates from './pages/Affiliates';
 import AdminLogin from './pages/AdminLogin';
 import AdminCalendar from './pages/AdminCalendar';
 
@@ -23,6 +24,7 @@ export default function App() {
           <Route path="/instructors" element={<PublicLayout><Instructors /></PublicLayout>} />
           <Route path="/calendar" element={<PublicLayout><Calendar /></PublicLayout>} />
           <Route path="/contact" element={<PublicLayout><Contact /></PublicLayout>} />
+          <Route path="/affiliates" element={<PublicLayout><Affiliates /></PublicLayout>} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin/calendar" element={<AdminCalendar />} />
         </Routes>
