@@ -181,28 +181,10 @@ export default function Home() {
                     {/* Red top accent */}
                     <div className="absolute top-0 left-0 right-0 z-20" style={{ height: '3px', background: '#C41E1E' }} />
 
-                    {/* Gray background with honeycomb pattern */}
-                    <div
-                      className="absolute inset-0 z-0"
-                      style={{ background: '#3a3a3a' }}
-                    />
-                    {/* Honeycomb SVG pattern overlay */}
-                    <div
-                      className="absolute inset-0 z-0"
-                      style={{
-                        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='32'%3E%3Cpolygon points='14,2 26,9 26,23 14,30 2,23 2,9' fill='none' stroke='rgba(0,0,0,0.28)' stroke-width='1.2'/%3E%3C/svg%3E")`,
-                        backgroundSize: '28px 32px',
-                      }}
-                    />
-                    {/* Subtle yellow center glow so the black card border reads clearly */}
-                    <div
-                      className="absolute inset-0 z-0 pointer-events-none"
-                      style={{
-                        background: 'radial-gradient(ellipse 70% 60% at 50% 45%, rgba(245,196,0,0.10) 0%, transparent 75%)',
-                      }}
-                    />
+                    {/* Clean dark card background — no pattern here */}
+                    <div className="absolute inset-0 z-0" style={{ background: '#111111' }} />
 
-                    {/* Bear image */}
+                    {/* Bear image + overlays scoped to image area only */}
                     <div className="relative z-10">
                       <img
                         src={bearImg}
@@ -210,8 +192,31 @@ export default function Home() {
                         className="w-full h-auto block"
                         style={{ filter: 'contrast(1.18) brightness(1.04)' }}
                       />
+                      {/*
+                        Honeycomb overlay using multiply blend mode.
+                        multiply: dark hexagon strokes darken the gray badge area;
+                        on the black bear outline/fur they multiply to black = invisible.
+                        This naturally confines the pattern to the gray badge shape.
+                      */}
                       <div
-                        className="absolute bottom-0 left-0 right-0 pointer-events-none z-10"
+                        className="absolute inset-0 pointer-events-none"
+                        style={{
+                          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='32'%3E%3Cpolygon points='14,2 26,9 26,23 14,30 2,23 2,9' fill='white' stroke='rgba(0,0,0,0.55)' stroke-width='1.3'/%3E%3C/svg%3E")`,
+                          backgroundSize: '28px 32px',
+                          mixBlendMode: 'multiply',
+                          opacity: 0.9,
+                        }}
+                      />
+                      {/* Subtle warm lift centered on the badge — soft-light keeps it restrained */}
+                      <div
+                        className="absolute inset-0 pointer-events-none"
+                        style={{
+                          background: 'radial-gradient(ellipse 60% 52% at 50% 42%, rgba(245,196,0,0.18) 0%, transparent 68%)',
+                          mixBlendMode: 'soft-light',
+                        }}
+                      />
+                      <div
+                        className="absolute bottom-0 left-0 right-0 pointer-events-none"
                         style={{ height: '35%', background: 'linear-gradient(to top, rgba(245,196,0,0.14) 0%, transparent 100%)' }}
                       />
                     </div>
