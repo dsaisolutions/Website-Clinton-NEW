@@ -117,6 +117,13 @@ function combineDateAndTime(date: Date, timeStr: string): string {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate(), hh, mm, 0, 0).toISOString();
 }
 
+function dateOnlyLocal(iso: string): string {
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+}
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type EditScope = 'this' | 'future' | 'all';
@@ -133,7 +140,7 @@ interface FormState {
   // Single-event
   start_time: string;
   end_time: string;
-  // Recurrence (create-only)
+  // Recurrence
   repeat_type: 'none' | 'weekly';
   recur_start_date: string;
   recur_end_date: string;
@@ -162,6 +169,9 @@ const EMPTY_FORM: FormState = {
 };
 
 function toFormState(ev: CalendarEvent): FormState {
+  const startLocal = toDatetimeLocal(ev.start_time);
+  const endLocal = toDatetimeLocal(ev.end_time);
+
   return {
     ...EMPTY_FORM,
     title:        ev.title,
@@ -172,8 +182,14 @@ function toFormState(ev: CalendarEvent): FormState {
     location:     ev.location ?? '',
     is_published: ev.is_published,
     is_cancelled: ev.is_cancelled,
-    start_time:   toDatetimeLocal(ev.start_time),
-    end_time:     toDatetimeLocal(ev.end_time),
+    start_time:   startLocal,
+    end_time:     endLocal,
+    repeat_type:  ev.series_id ? 'weekly' : 'none',
+    recur_start_date: startLocal.slice(0, 10),
+    recur_end_date: startLocal.slice(0, 10),
+    recur_day: String(new Date(ev.start_time).getDay()),
+    recur_start_time: startLocal.slice(11, 16),
+    recur_end_time: endLocal.slice(11, 16),
   };
 }
 
@@ -276,74 +292,181 @@ function EventModal({
     }
   };
 
-  const handleEdit = async () => {
-    if (!editing) return;
+const handleEdit = async () => {
+  if (!editing) return;
 
-    const basePayload: Record<string, unknown> = {
-      title:        form.title.trim(),
-      description:  form.description.trim() || null,
-      event_type:   form.event_type,
-      audience:     form.audience,
-      class_level:  form.class_level,
-      location:     form.location.trim() || null,
-      is_published: form.is_published,
-      is_cancelled: form.is_cancelled,
-    };
+  const basePayload: Record<string, unknown> = {
+    title:        form.title.trim(),
+    description:  form.description.trim() || null,
+    event_type:   form.event_type,
+    audience:     form.audience,
+    class_level:  form.class_level,
+    location:     form.location.trim() || null,
+    is_published: form.is_published,
+    is_cancelled: form.is_cancelled,
+  };
 
-    const newStartISO = localInputToISO(form.start_time);
-    const newEndISO   = localInputToISO(form.end_time);
+  const newStartISO = localInputToISO(form.start_time);
+  const newEndISO   = localInputToISO(form.end_time);
 
-    // Single-event or "this event only"
-    if (!hasSeries || editScope === 'this') {
+  // Single-event or "this event only"
+  if (!hasSeries || editScope === 'this') {
+    const { error } = await supabase
+      .from('calendar_events')
+      .update({
+        ...basePayload,
+        start_time: newStartISO,
+        end_time: newEndISO,
+      })
+      .eq('id', editing.id);
+
+    if (error) throw new Error(error.message);
+    return;
+  }
+
+  const seriesId = editing.series_id!;
+
+  // Fetch all rows in this series.
+  const { data: seriesRowsRaw, error: seriesFetchErr } = await supabase
+    .from('calendar_events')
+    .select('*')
+    .eq('series_id', seriesId)
+    .order('start_time', { ascending: true });
+
+  if (seriesFetchErr) throw new Error(seriesFetchErr.message);
+
+  const seriesRows = (seriesRowsRaw ?? []) as CalendarEvent[];
+
+  if (seriesRows.length === 0) {
+    throw new Error('No events found for this series.');
+  }
+
+  const affectedRows =
+    editScope === 'future'
+      ? seriesRows.filter(row => new Date(row.start_time) >= new Date(editing.start_time))
+      : seriesRows;
+
+  if (affectedRows.length === 0) {
+    throw new Error('No matching events found for this edit scope.');
+  }
+
+  const origStartParts = getLocalTimeParts(editing.start_time);
+  const origEndParts   = getLocalTimeParts(editing.end_time);
+  const newStartParts  = getLocalTimeParts(newStartISO);
+  const newEndParts    = getLocalTimeParts(newEndISO);
+
+  const timesChanged =
+    origStartParts.h !== newStartParts.h ||
+    origStartParts.m !== newStartParts.m ||
+    origEndParts.h !== newEndParts.h ||
+    origEndParts.m !== newEndParts.m;
+
+  // Update existing affected rows.
+  if (!timesChanged) {
+    const ids = affectedRows.map(row => row.id);
+
+    const { error } = await supabase
+      .from('calendar_events')
+      .update(basePayload)
+      .in('id', ids);
+
+    if (error) throw new Error(error.message);
+  } else {
+    for (const row of affectedRows) {
+      const updatedStart = replaceTime(row.start_time, newStartParts.h, newStartParts.m);
+      const updatedEnd   = replaceTime(row.end_time, newEndParts.h, newEndParts.m);
+
       const { error } = await supabase
         .from('calendar_events')
-        .update({ ...basePayload, start_time: newStartISO, end_time: newEndISO })
-        .eq('id', editing.id);
+        .update({
+          ...basePayload,
+          start_time: updatedStart,
+          end_time: updatedEnd,
+        })
+        .eq('id', row.id);
+
       if (error) throw new Error(error.message);
-      return;
+    }
+  }
+
+  // If no series end date is set, stop after updating existing rows.
+  if (!form.recur_end_date) return;
+
+  const requestedEndDate = form.recur_end_date;
+
+  const currentRowsForScope =
+    editScope === 'future'
+      ? seriesRows.filter(row => new Date(row.start_time) >= new Date(editing.start_time))
+      : seriesRows;
+
+  const latestRow = [...currentRowsForScope].sort(
+    (a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime(),
+  )[0];
+
+  const latestDateLocal = dateOnlyLocal(latestRow.start_time);
+
+  // Shorten series:
+  // Delete rows after the requested end date inside the selected scope.
+  if (requestedEndDate < latestDateLocal) {
+    const rowsToDelete = currentRowsForScope.filter(
+      row => dateOnlyLocal(row.start_time) > requestedEndDate,
+    );
+
+    if (rowsToDelete.length > 0) {
+      const { error } = await supabase
+        .from('calendar_events')
+        .delete()
+        .in('id', rowsToDelete.map(row => row.id));
+
+      if (error) throw new Error(error.message);
     }
 
-    // Series scope — check whether only the time-of-day changed
-    const origStartParts = getLocalTimeParts(editing.start_time);
-    const origEndParts   = getLocalTimeParts(editing.end_time);
-    const newStartParts  = getLocalTimeParts(newStartISO);
-    const newEndParts    = getLocalTimeParts(newEndISO);
+    return;
+  }
 
-    const timesChanged =
-      origStartParts.h !== newStartParts.h || origStartParts.m !== newStartParts.m ||
-      origEndParts.h   !== newEndParts.h   || origEndParts.m   !== newEndParts.m;
+  // Extend series:
+  // Insert missing weekly rows after the current latest row through requested end date.
+  if (requestedEndDate > latestDateLocal) {
+    const latestDate = new Date(latestRow.start_time);
+    const nextStartDate = new Date(
+      latestDate.getFullYear(),
+      latestDate.getMonth(),
+      latestDate.getDate(),
+      12,
+    );
 
-    if (!timesChanged) {
-      // Non-time fields only — simple bulk update
-      let query = supabase
+    nextStartDate.setDate(nextStartDate.getDate() + 7);
+
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const extensionStartDate =
+      `${nextStartDate.getFullYear()}-${pad(nextStartDate.getMonth() + 1)}-${pad(nextStartDate.getDate())}`;
+
+    const recurDay = new Date(editing.start_time).getDay();
+
+    const dates = generateWeeklyDates(extensionStartDate, requestedEndDate, recurDay);
+
+    if (dates.length === 0) return;
+
+    const existingStartTimes = new Set(seriesRows.map(row => row.start_time));
+
+    const rowsToInsert = dates
+      .map(date => ({
+        ...basePayload,
+        start_time: combineDateAndTime(date, form.start_time.slice(11, 16)),
+        end_time:   combineDateAndTime(date, form.end_time.slice(11, 16)),
+        series_id:  seriesId,
+      }))
+      .filter(row => !existingStartTimes.has(row.start_time as string));
+
+    if (rowsToInsert.length > 0) {
+      const { error } = await supabase
         .from('calendar_events')
-        .update(basePayload)
-        .eq('series_id', editing.series_id!);
-      if (editScope === 'future') query = query.gte('start_time', editing.start_time);
-      const { error } = await query;
+        .insert(rowsToInsert);
+
       if (error) throw new Error(error.message);
-    } else {
-      // Fetch affected rows, update each preserving original date + new time
-      let q = supabase
-        .from('calendar_events')
-        .select('id, start_time, end_time')
-        .eq('series_id', editing.series_id!);
-      if (editScope === 'future') q = q.gte('start_time', editing.start_time);
-
-      const { data, error: fetchErr } = await q;
-      if (fetchErr) throw new Error(fetchErr.message);
-
-      for (const row of (data ?? []) as { id: string; start_time: string; end_time: string }[]) {
-        const updatedStart = replaceTime(row.start_time, newStartParts.h, newStartParts.m);
-        const updatedEnd   = replaceTime(row.end_time,   newEndParts.h,   newEndParts.m);
-        const { error } = await supabase
-          .from('calendar_events')
-          .update({ ...basePayload, start_time: updatedStart, end_time: updatedEnd })
-          .eq('id', row.id);
-        if (error) throw new Error(error.message);
-      }
     }
-  };
+  }
+};
 
   const inputCls =
     'w-full bg-gym-black border border-gym-charcoal-light text-white font-body text-sm px-3 py-2.5 focus:outline-none focus:border-bee-yellow transition-colors placeholder-gray-700';
