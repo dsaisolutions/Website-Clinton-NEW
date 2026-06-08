@@ -90,17 +90,17 @@ function replaceTime(originalIso: string, h: number, m: number): string {
 }
 
 /**
- * Returns all dates between startDate and endDate (inclusive, YYYY-MM-DD strings)
- * that fall on the given dayOfWeek (0=Sun). Uses noon local time to avoid DST edge cases.
+ * Returns all dates between startDate and endDate inclusive that fall on the given dayOfWeek.
+ * Uses noon local time to avoid DST edge cases.
  */
 function generateWeeklyDates(startDate: string, endDate: string, dayOfWeek: number): Date[] {
   const [sy, sm, sd] = startDate.split('-').map(Number);
   const [ey, em, ed] = endDate.split('-').map(Number);
   const start = new Date(sy, sm - 1, sd, 12);
-  const end   = new Date(ey, em - 1, ed, 12);
+  const end = new Date(ey, em - 1, ed, 12);
 
   const diff = (dayOfWeek - start.getDay() + 7) % 7;
-  const cur  = new Date(start);
+  const cur = new Date(start);
   cur.setDate(cur.getDate() + diff);
 
   const result: Date[] = [];
@@ -111,7 +111,7 @@ function generateWeeklyDates(startDate: string, endDate: string, dayOfWeek: numb
   return result;
 }
 
-/** Combine a Date's calendar date with a 'HH:MM' time string → UTC ISO string. */
+/** Combine a Date's calendar date with a 'HH:MM' time string into a UTC ISO string. */
 function combineDateAndTime(date: Date, timeStr: string): string {
   const [hh, mm] = timeStr.split(':').map(Number);
   return new Date(date.getFullYear(), date.getMonth(), date.getDate(), hh, mm, 0, 0).toISOString();
@@ -121,7 +121,6 @@ function dateOnlyLocal(iso: string): string {
   const d = new Date(iso);
   const pad = (n: number) => String(n).padStart(2, '0');
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-}
 }
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -137,10 +136,8 @@ interface FormState {
   location: string;
   is_published: boolean;
   is_cancelled: boolean;
-  // Single-event
   start_time: string;
   end_time: string;
-  // Recurrence
   repeat_type: 'none' | 'weekly';
   recur_start_date: string;
   recur_end_date: string;
@@ -168,25 +165,26 @@ const EMPTY_FORM: FormState = {
   recur_end_time: '',
 };
 
-function toFormState(ev: CalendarEvent): FormState {
+function toFormState(ev: CalendarEvent, seriesEndDate?: string | null): FormState {
   const startLocal = toDatetimeLocal(ev.start_time);
   const endLocal = toDatetimeLocal(ev.end_time);
+  const seriesEndLocal = seriesEndDate ? dateOnlyLocal(seriesEndDate) : startLocal.slice(0, 10);
 
   return {
     ...EMPTY_FORM,
-    title:        ev.title,
-    description:  ev.description ?? '',
-    event_type:   ev.event_type,
-    audience:     ev.audience,
-    class_level:  ev.class_level,
-    location:     ev.location ?? '',
+    title: ev.title,
+    description: ev.description ?? '',
+    event_type: ev.event_type,
+    audience: ev.audience,
+    class_level: ev.class_level,
+    location: ev.location ?? '',
     is_published: ev.is_published,
     is_cancelled: ev.is_cancelled,
-    start_time:   startLocal,
-    end_time:     endLocal,
-    repeat_type:  ev.series_id ? 'weekly' : 'none',
+    start_time: startLocal,
+    end_time: endLocal,
+    repeat_type: ev.series_id ? 'weekly' : 'none',
     recur_start_date: startLocal.slice(0, 10),
-    recur_end_date: startLocal.slice(0, 10),
+    recur_end_date: seriesEndLocal,
     recur_day: String(new Date(ev.start_time).getDay()),
     recur_start_time: startLocal.slice(11, 16),
     recur_end_time: endLocal.slice(11, 16),
@@ -197,17 +195,19 @@ function toFormState(ev: CalendarEvent): FormState {
 
 function EventModal({
   editing,
+  seriesEndDate,
   onClose,
   onSaved,
 }: {
   editing: CalendarEvent | null;
+  seriesEndDate?: string | null;
   onClose: () => void;
   onSaved: () => void;
 }) {
-  const [form, setForm]           = useState<FormState>(editing ? toFormState(editing) : EMPTY_FORM);
+  const [form, setForm] = useState<FormState>(editing ? toFormState(editing, seriesEndDate) : EMPTY_FORM);
   const [editScope, setEditScope] = useState<EditScope>('this');
-  const [error, setError]         = useState('');
-  const [saving, setSaving]       = useState(false);
+  const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
 
   const set = (k: keyof FormState, v: string | boolean) =>
     setForm(prev => ({ ...prev, [k]: v }));
@@ -216,30 +216,35 @@ function EventModal({
 
   const validate = (): string => {
     if (!form.title.trim()) return 'Title is required.';
+
     if (editing || form.repeat_type === 'none') {
       if (!form.start_time) return 'Start time is required.';
-      if (!form.end_time)   return 'End time is required.';
-      if (new Date(form.start_time) >= new Date(form.end_time))
-        return 'End time must be after start time.';
+      if (!form.end_time) return 'End time is required.';
+      if (new Date(form.start_time) >= new Date(form.end_time)) return 'End time must be after start time.';
+      if (editing && hasSeries && editScope !== 'this' && !form.recur_end_date) return 'Series end date is required.';
     } else {
       if (!form.recur_start_date) return 'Start date is required.';
-      if (!form.recur_end_date)   return 'End date is required.';
-      if (form.recur_end_date < form.recur_start_date)
-        return 'End date cannot be before start date.';
+      if (!form.recur_end_date) return 'End date is required.';
+      if (form.recur_end_date < form.recur_start_date) return 'End date cannot be before start date.';
       if (!form.recur_start_time) return 'Start time is required.';
-      if (!form.recur_end_time)   return 'End time is required.';
-      if (form.recur_start_time >= form.recur_end_time)
-        return 'End time must be after start time.';
+      if (!form.recur_end_time) return 'End time is required.';
+      if (form.recur_start_time >= form.recur_end_time) return 'End time must be after start time.';
     }
+
     return '';
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const err = validate();
-    if (err) { setError(err); return; }
+    if (err) {
+      setError(err);
+      return;
+    }
+
     setError('');
     setSaving(true);
+
     try {
       editing ? await handleEdit() : await handleCreate();
       onSaved();
@@ -252,12 +257,12 @@ function EventModal({
 
   const handleCreate = async () => {
     const base = {
-      title:       form.title.trim(),
+      title: form.title.trim(),
       description: form.description.trim() || null,
-      event_type:  form.event_type,
-      audience:    form.audience,
+      event_type: form.event_type,
+      audience: form.audience,
       class_level: form.class_level,
-      location:    form.location.trim() || null,
+      location: form.location.trim() || null,
       is_published: form.is_published,
       is_cancelled: false,
     };
@@ -266,25 +271,27 @@ function EventModal({
       const { error } = await supabase.from('calendar_events').insert({
         ...base,
         start_time: localInputToISO(form.start_time),
-        end_time:   localInputToISO(form.end_time),
-        series_id:  null,
+        end_time: localInputToISO(form.end_time),
+        series_id: null,
       });
       if (error) throw new Error(error.message);
     } else {
       const seriesId = crypto.randomUUID();
-      const dates    = generateWeeklyDates(
+      const dates = generateWeeklyDates(
         form.recur_start_date,
         form.recur_end_date,
         parseInt(form.recur_day, 10),
       );
-      if (dates.length === 0)
+
+      if (dates.length === 0) {
         throw new Error('No matching dates found. Verify your start date, end date, and day of week.');
+      }
 
       const rows = dates.map(date => ({
         ...base,
         start_time: combineDateAndTime(date, form.recur_start_time),
-        end_time:   combineDateAndTime(date, form.recur_end_time),
-        series_id:  seriesId,
+        end_time: combineDateAndTime(date, form.recur_end_time),
+        series_id: seriesId,
       }));
 
       const { error } = await supabase.from('calendar_events').insert(rows);
@@ -292,186 +299,153 @@ function EventModal({
     }
   };
 
-const handleEdit = async () => {
-  if (!editing) return;
+  const handleEdit = async () => {
+    if (!editing) return;
 
-  const basePayload: Record<string, unknown> = {
-    title:        form.title.trim(),
-    description:  form.description.trim() || null,
-    event_type:   form.event_type,
-    audience:     form.audience,
-    class_level:  form.class_level,
-    location:     form.location.trim() || null,
-    is_published: form.is_published,
-    is_cancelled: form.is_cancelled,
-  };
+    const basePayload: Record<string, unknown> = {
+      title: form.title.trim(),
+      description: form.description.trim() || null,
+      event_type: form.event_type,
+      audience: form.audience,
+      class_level: form.class_level,
+      location: form.location.trim() || null,
+      is_published: form.is_published,
+      is_cancelled: form.is_cancelled,
+    };
 
-  const newStartISO = localInputToISO(form.start_time);
-  const newEndISO   = localInputToISO(form.end_time);
+    const newStartISO = localInputToISO(form.start_time);
+    const newEndISO = localInputToISO(form.end_time);
 
-  // Single-event or "this event only"
-  if (!hasSeries || editScope === 'this') {
-    const { error } = await supabase
+    if (!hasSeries || editScope === 'this') {
+      const { error } = await supabase
+        .from('calendar_events')
+        .update({ ...basePayload, start_time: newStartISO, end_time: newEndISO })
+        .eq('id', editing.id);
+
+      if (error) throw new Error(error.message);
+      return;
+    }
+
+    const seriesId = editing.series_id!;
+
+    const { data: seriesRowsRaw, error: seriesFetchErr } = await supabase
       .from('calendar_events')
-      .update({
-        ...basePayload,
-        start_time: newStartISO,
-        end_time: newEndISO,
-      })
-      .eq('id', editing.id);
+      .select('*')
+      .eq('series_id', seriesId)
+      .order('start_time', { ascending: true });
 
-    if (error) throw new Error(error.message);
-    return;
-  }
+    if (seriesFetchErr) throw new Error(seriesFetchErr.message);
 
-  const seriesId = editing.series_id!;
+    const seriesRows = (seriesRowsRaw ?? []) as CalendarEvent[];
 
-  // Fetch all rows in this series.
-  const { data: seriesRowsRaw, error: seriesFetchErr } = await supabase
-    .from('calendar_events')
-    .select('*')
-    .eq('series_id', seriesId)
-    .order('start_time', { ascending: true });
+    if (seriesRows.length === 0) throw new Error('No events found for this series.');
 
-  if (seriesFetchErr) throw new Error(seriesFetchErr.message);
-
-  const seriesRows = (seriesRowsRaw ?? []) as CalendarEvent[];
-
-  if (seriesRows.length === 0) {
-    throw new Error('No events found for this series.');
-  }
-
-  const affectedRows =
-    editScope === 'future'
+    const affectedRows = editScope === 'future'
       ? seriesRows.filter(row => new Date(row.start_time) >= new Date(editing.start_time))
       : seriesRows;
 
-  if (affectedRows.length === 0) {
-    throw new Error('No matching events found for this edit scope.');
-  }
+    if (affectedRows.length === 0) throw new Error('No matching events found for this edit scope.');
 
-  const origStartParts = getLocalTimeParts(editing.start_time);
-  const origEndParts   = getLocalTimeParts(editing.end_time);
-  const newStartParts  = getLocalTimeParts(newStartISO);
-  const newEndParts    = getLocalTimeParts(newEndISO);
+    const origStartParts = getLocalTimeParts(editing.start_time);
+    const origEndParts = getLocalTimeParts(editing.end_time);
+    const newStartParts = getLocalTimeParts(newStartISO);
+    const newEndParts = getLocalTimeParts(newEndISO);
 
-  const timesChanged =
-    origStartParts.h !== newStartParts.h ||
-    origStartParts.m !== newStartParts.m ||
-    origEndParts.h !== newEndParts.h ||
-    origEndParts.m !== newEndParts.m;
+    const timesChanged =
+      origStartParts.h !== newStartParts.h ||
+      origStartParts.m !== newStartParts.m ||
+      origEndParts.h !== newEndParts.h ||
+      origEndParts.m !== newEndParts.m;
 
-  // Update existing affected rows.
-  if (!timesChanged) {
-    const ids = affectedRows.map(row => row.id);
-
-    const { error } = await supabase
-      .from('calendar_events')
-      .update(basePayload)
-      .in('id', ids);
-
-    if (error) throw new Error(error.message);
-  } else {
-    for (const row of affectedRows) {
-      const updatedStart = replaceTime(row.start_time, newStartParts.h, newStartParts.m);
-      const updatedEnd   = replaceTime(row.end_time, newEndParts.h, newEndParts.m);
-
+    if (!timesChanged) {
       const { error } = await supabase
         .from('calendar_events')
-        .update({
+        .update(basePayload)
+        .in('id', affectedRows.map(row => row.id));
+
+      if (error) throw new Error(error.message);
+    } else {
+      for (const row of affectedRows) {
+        const updatedStart = replaceTime(row.start_time, newStartParts.h, newStartParts.m);
+        const updatedEnd = replaceTime(row.end_time, newEndParts.h, newEndParts.m);
+
+        const { error } = await supabase
+          .from('calendar_events')
+          .update({ ...basePayload, start_time: updatedStart, end_time: updatedEnd })
+          .eq('id', row.id);
+
+        if (error) throw new Error(error.message);
+      }
+    }
+
+    if (!form.recur_end_date) return;
+
+    const requestedEndDate = form.recur_end_date;
+    const currentRowsForScope = editScope === 'future'
+      ? seriesRows.filter(row => new Date(row.start_time) >= new Date(editing.start_time))
+      : seriesRows;
+
+    const latestRow = [...currentRowsForScope].sort(
+      (a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime(),
+    )[0];
+
+    const latestDateLocal = dateOnlyLocal(latestRow.start_time);
+
+    if (requestedEndDate < latestDateLocal) {
+      const rowsToDelete = currentRowsForScope.filter(row => dateOnlyLocal(row.start_time) > requestedEndDate);
+
+      if (rowsToDelete.length > 0) {
+        const { error } = await supabase
+          .from('calendar_events')
+          .delete()
+          .in('id', rowsToDelete.map(row => row.id));
+
+        if (error) throw new Error(error.message);
+      }
+
+      return;
+    }
+
+    if (requestedEndDate > latestDateLocal) {
+      const latestDate = new Date(latestRow.start_time);
+      const nextStartDate = new Date(
+        latestDate.getFullYear(),
+        latestDate.getMonth(),
+        latestDate.getDate(),
+        12,
+      );
+      nextStartDate.setDate(nextStartDate.getDate() + 7);
+
+      const extensionStartDate = dateOnlyLocal(nextStartDate.toISOString());
+      const recurDay = new Date(editing.start_time).getDay();
+      const dates = generateWeeklyDates(extensionStartDate, requestedEndDate, recurDay);
+
+      if (dates.length === 0) return;
+
+      const existingStartTimes = new Set(seriesRows.map(row => row.start_time));
+      const startTimeOnly = form.start_time.slice(11, 16);
+      const endTimeOnly = form.end_time.slice(11, 16);
+
+      const rowsToInsert = dates
+        .map(date => ({
           ...basePayload,
-          start_time: updatedStart,
-          end_time: updatedEnd,
-        })
-        .eq('id', row.id);
+          start_time: combineDateAndTime(date, startTimeOnly),
+          end_time: combineDateAndTime(date, endTimeOnly),
+          series_id: seriesId,
+        }))
+        .filter(row => !existingStartTimes.has(row.start_time as string));
 
-      if (error) throw new Error(error.message);
+      if (rowsToInsert.length > 0) {
+        const { error } = await supabase.from('calendar_events').insert(rowsToInsert);
+        if (error) throw new Error(error.message);
+      }
     }
-  }
-
-  // If no series end date is set, stop after updating existing rows.
-  if (!form.recur_end_date) return;
-
-  const requestedEndDate = form.recur_end_date;
-
-  const currentRowsForScope =
-    editScope === 'future'
-      ? seriesRows.filter(row => new Date(row.start_time) >= new Date(editing.start_time))
-      : seriesRows;
-
-  const latestRow = [...currentRowsForScope].sort(
-    (a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime(),
-  )[0];
-
-  const latestDateLocal = dateOnlyLocal(latestRow.start_time);
-
-  // Shorten series:
-  // Delete rows after the requested end date inside the selected scope.
-  if (requestedEndDate < latestDateLocal) {
-    const rowsToDelete = currentRowsForScope.filter(
-      row => dateOnlyLocal(row.start_time) > requestedEndDate,
-    );
-
-    if (rowsToDelete.length > 0) {
-      const { error } = await supabase
-        .from('calendar_events')
-        .delete()
-        .in('id', rowsToDelete.map(row => row.id));
-
-      if (error) throw new Error(error.message);
-    }
-
-    return;
-  }
-
-  // Extend series:
-  // Insert missing weekly rows after the current latest row through requested end date.
-  if (requestedEndDate > latestDateLocal) {
-    const latestDate = new Date(latestRow.start_time);
-    const nextStartDate = new Date(
-      latestDate.getFullYear(),
-      latestDate.getMonth(),
-      latestDate.getDate(),
-      12,
-    );
-
-    nextStartDate.setDate(nextStartDate.getDate() + 7);
-
-    const pad = (n: number) => String(n).padStart(2, '0');
-    const extensionStartDate =
-      `${nextStartDate.getFullYear()}-${pad(nextStartDate.getMonth() + 1)}-${pad(nextStartDate.getDate())}`;
-
-    const recurDay = new Date(editing.start_time).getDay();
-
-    const dates = generateWeeklyDates(extensionStartDate, requestedEndDate, recurDay);
-
-    if (dates.length === 0) return;
-
-    const existingStartTimes = new Set(seriesRows.map(row => row.start_time));
-
-    const rowsToInsert = dates
-      .map(date => ({
-        ...basePayload,
-        start_time: combineDateAndTime(date, form.start_time.slice(11, 16)),
-        end_time:   combineDateAndTime(date, form.end_time.slice(11, 16)),
-        series_id:  seriesId,
-      }))
-      .filter(row => !existingStartTimes.has(row.start_time as string));
-
-    if (rowsToInsert.length > 0) {
-      const { error } = await supabase
-        .from('calendar_events')
-        .insert(rowsToInsert);
-
-      if (error) throw new Error(error.message);
-    }
-  }
-};
+  };
 
   const inputCls =
     'w-full bg-gym-black border border-gym-charcoal-light text-white font-body text-sm px-3 py-2.5 focus:outline-none focus:border-bee-yellow transition-colors placeholder-gray-700';
   const labelCls = 'font-heading text-[11px] uppercase tracking-widest text-gray-500 block mb-1.5';
-  const selCls   = `${inputCls} appearance-none`;
+  const selCls = `${inputCls} appearance-none`;
 
   return (
     <div
@@ -491,8 +465,6 @@ const handleEdit = async () => {
         </div>
 
         <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
-
-          {/* Title */}
           <div>
             <label className={labelCls}>Title *</label>
             <input
@@ -504,7 +476,6 @@ const handleEdit = async () => {
             />
           </div>
 
-          {/* Description */}
           <div>
             <label className={labelCls}>Description</label>
             <textarea
@@ -516,7 +487,6 @@ const handleEdit = async () => {
             />
           </div>
 
-          {/* Event Type / Audience */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className={labelCls}>Event Type *</label>
@@ -526,9 +496,7 @@ const handleEdit = async () => {
                   value={form.event_type}
                   onChange={e => set('event_type', e.target.value)}
                 >
-                  {EVENT_TYPE_OPTS.map(o => (
-                    <option key={o.value} value={o.value}>{o.label}</option>
-                  ))}
+                  {EVENT_TYPE_OPTS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </select>
                 <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
               </div>
@@ -541,16 +509,13 @@ const handleEdit = async () => {
                   value={form.audience}
                   onChange={e => set('audience', e.target.value)}
                 >
-                  {AUDIENCE_OPTS.map(o => (
-                    <option key={o.value} value={o.value}>{o.label}</option>
-                  ))}
+                  {AUDIENCE_OPTS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </select>
                 <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
               </div>
             </div>
           </div>
 
-          {/* Discipline / Location */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className={labelCls}>Discipline</label>
@@ -560,9 +525,7 @@ const handleEdit = async () => {
                   value={form.class_level}
                   onChange={e => set('class_level', e.target.value)}
                 >
-                  {LEVEL_OPTS.map(o => (
-                    <option key={o.value} value={o.value}>{o.label}</option>
-                  ))}
+                  {LEVEL_OPTS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </select>
                 <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
               </div>
@@ -578,7 +541,6 @@ const handleEdit = async () => {
             </div>
           </div>
 
-          {/* Repeat type selector (create only) */}
           {!editing && (
             <div>
               <label className={labelCls}>Repeat</label>
@@ -602,55 +564,52 @@ const handleEdit = async () => {
             </div>
           )}
 
-{/* Datetime fields — single event or edit */}
-{(editing || form.repeat_type === 'none') && (
-  <div className="grid grid-cols-2 gap-4">
-    <div>
-      <label className={labelCls}>Start *</label>
-      <input
-        type="datetime-local"
-        className={inputCls}
-        required
-        value={form.start_time}
-        onChange={e => set('start_time', e.target.value)}
-      />
-    </div>
-    <div>
-      <label className={labelCls}>End *</label>
-      <input
-        type="datetime-local"
-        className={inputCls}
-        required
-        value={form.end_time}
-        onChange={e => set('end_time', e.target.value)}
-      />
-    </div>
-  </div>
-)}
+          {(editing || form.repeat_type === 'none') && (
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className={labelCls}>Class Start *</label>
+                <input
+                  type="datetime-local"
+                  className={inputCls}
+                  required
+                  value={form.start_time}
+                  onChange={e => set('start_time', e.target.value)}
+                />
+              </div>
+              <div>
+                <label className={labelCls}>Class End *</label>
+                <input
+                  type="datetime-local"
+                  className={inputCls}
+                  required
+                  value={form.end_time}
+                  onChange={e => set('end_time', e.target.value)}
+                />
+              </div>
+            </div>
+          )}
 
-{editing && hasSeries && (
-  <div className="bg-gym-black border border-gym-charcoal-light p-4">
-    <p className="font-heading text-[11px] uppercase tracking-widest text-gray-500 mb-3">
-      Series Range
-    </p>
+          {editing && hasSeries && (
+            <div className="bg-gym-black border border-gym-charcoal-light p-4">
+              <p className="font-heading text-[11px] uppercase tracking-widest text-gray-500 mb-3">
+                Series Range
+              </p>
+              <div>
+                <label className={labelCls}>Series End Date *</label>
+                <input
+                  type="date"
+                  className={inputCls}
+                  required
+                  value={form.recur_end_date}
+                  onChange={e => set('recur_end_date', e.target.value)}
+                />
+                <p className="font-body text-xs text-gray-600 mt-1">
+                  Extending this date creates new weekly rows. Shortening it removes rows after this date based on the selected save scope.
+                </p>
+              </div>
+            </div>
+          )}
 
-    <div>
-      <label className={labelCls}>Series End Date *</label>
-      <input
-        type="date"
-        className={inputCls}
-        required
-        value={form.recur_end_date}
-        onChange={e => set('recur_end_date', e.target.value)}
-      />
-      <p className="font-body text-xs text-gray-600 mt-1">
-        Extending this date creates new weekly rows. Shortening it removes rows after this date based on the selected save scope.
-      </p>
-    </div>
-  </div>
-)}
-
-          {/* Weekly recurrence fields (create only) */}
           {!editing && form.repeat_type === 'weekly' && (
             <div className="space-y-4 bg-gym-black border border-gym-charcoal-light p-4">
               <p className="font-heading text-[11px] uppercase tracking-widest text-gray-500">Weekly Schedule</p>
@@ -686,9 +645,7 @@ const handleEdit = async () => {
                     value={form.recur_day}
                     onChange={e => set('recur_day', e.target.value)}
                   >
-                    {DAYS_OF_WEEK.map(d => (
-                      <option key={d.value} value={d.value}>{d.label}</option>
-                    ))}
+                    {DAYS_OF_WEEK.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
                   </select>
                   <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
                 </div>
@@ -719,7 +676,6 @@ const handleEdit = async () => {
             </div>
           )}
 
-          {/* Published / Cancelled toggles */}
           <div className="flex gap-6 pt-1">
             <label className="flex items-center gap-2 cursor-pointer">
               <input
@@ -743,20 +699,17 @@ const handleEdit = async () => {
             )}
           </div>
 
-          {/* Edit scope — only shown when editing a series event */}
           {editing && hasSeries && (
             <div className="bg-gym-black border border-gym-charcoal-light p-4">
               <p className="font-heading text-[11px] uppercase tracking-widest text-gray-500 mb-3">
                 Save scope *
               </p>
               <div className="flex flex-col gap-2.5">
-                {(
-                  [
-                    { v: 'this',   label: 'This event only'             },
-                    { v: 'future', label: 'All future events in series' },
-                    { v: 'all',    label: 'Entire series'               },
-                  ] as { v: EditScope; label: string }[]
-                ).map(opt => (
+                {([
+                  { v: 'this', label: 'This event only' },
+                  { v: 'future', label: 'All future events in series' },
+                  { v: 'all', label: 'Entire series' },
+                ] as { v: EditScope; label: string }[]).map(opt => (
                   <label key={opt.v} className="flex items-center gap-2.5 cursor-pointer">
                     <input
                       type="radio"
@@ -813,29 +766,31 @@ function DeleteConfirm({
   onClose: () => void;
   onDeleted: () => void;
 }) {
-  const [scope, setScope]     = useState<EditScope>('this');
+  const [scope, setScope] = useState<EditScope>('this');
   const [deleting, setDeleting] = useState(false);
-  const [error, setError]       = useState('');
+  const [error, setError] = useState('');
 
   const hasSeries = Boolean(event.series_id);
 
   const handleDelete = async () => {
     setDeleting(true);
     setError('');
+
     try {
       if (!hasSeries || scope === 'this') {
-        const { error: e } = await supabase
-          .from('calendar_events').delete().eq('id', event.id);
+        const { error: e } = await supabase.from('calendar_events').delete().eq('id', event.id);
         if (e) throw new Error(e.message);
       } else if (scope === 'future') {
         const { error: e } = await supabase
-          .from('calendar_events').delete()
+          .from('calendar_events')
+          .delete()
           .eq('series_id', event.series_id!)
           .gte('start_time', event.start_time);
         if (e) throw new Error(e.message);
       } else {
         const { error: e } = await supabase
-          .from('calendar_events').delete()
+          .from('calendar_events')
+          .delete()
           .eq('series_id', event.series_id!);
         if (e) throw new Error(e.message);
       }
@@ -847,10 +802,7 @@ function DeleteConfirm({
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center px-4"
-      style={{ background: 'rgba(0,0,0,0.88)' }}
-    >
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: 'rgba(0,0,0,0.88)' }}>
       <div className="w-full max-w-sm bg-gym-charcoal border border-gym-charcoal-light">
         <div className="h-1 bg-gym-red" />
         <div className="px-6 py-6">
@@ -864,13 +816,11 @@ function DeleteConfirm({
                 Delete scope *
               </p>
               <div className="flex flex-col gap-2.5">
-                {(
-                  [
-                    { v: 'this',   label: 'This event only'             },
-                    { v: 'future', label: 'All future events in series' },
-                    { v: 'all',    label: 'Entire series'               },
-                  ] as { v: EditScope; label: string }[]
-                ).map(opt => (
+                {([
+                  { v: 'this', label: 'This event only' },
+                  { v: 'future', label: 'All future events in series' },
+                  { v: 'all', label: 'Entire series' },
+                ] as { v: EditScope; label: string }[]).map(opt => (
                   <label key={opt.v} className="flex items-center gap-2.5 cursor-pointer">
                     <input
                       type="radio"
@@ -912,28 +862,35 @@ function DeleteConfirm({
 
 // ─── Admin display grouping ───────────────────────────────────────────────────
 
-const DOW_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const DOW_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 function fmtShortDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 const AUDIENCE_LABEL: Record<string, string> = {
-  all: 'All', adults: 'Adults', kids: 'Kids', women: 'Women',
+  all: 'All',
+  adults: 'Adults',
+  kids: 'Kids',
+  women: 'Women',
 };
+
 const LEVEL_LABEL: Record<string, string> = {
-  'all levels': 'All Levels', wrestling: 'Wrestling', gi: 'Gi',
-  'no gi': 'No Gi', mma: 'MMA', 'open mat': 'Open Mat',
+  'all levels': 'All Levels',
+  wrestling: 'Wrestling',
+  gi: 'Gi',
+  'no gi': 'No Gi',
+  mma: 'MMA',
+  'open mat': 'Open Mat',
 };
 
 interface DisplayRow {
-  /** Representative CalendarEvent (first occurrence for series, the event itself for singles) */
   rep: CalendarEvent;
   isSeries: boolean;
-  seriesStart: string; // ISO — earliest start_time in series
-  seriesEnd: string;   // ISO — latest start_time in series
-  dowName: string;     // day-of-week name (series only)
-  count: number;       // number of occurrences in series
+  seriesStart: string;
+  seriesEnd: string;
+  dowName: string;
+  count: number;
 }
 
 function buildDisplayRows(events: CalendarEvent[]): DisplayRow[] {
@@ -951,32 +908,36 @@ function buildDisplayRows(events: CalendarEvent[]): DisplayRow[] {
 
   const rows: DisplayRow[] = [];
 
-  // Series rows — one per series_id
   for (const [, occurrences] of seriesMap) {
     const sorted = [...occurrences].sort(
       (a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime(),
     );
-    const rep        = sorted[0];
-    const last       = sorted[sorted.length - 1];
-    const dowName    = DOW_NAMES[new Date(rep.start_time).getDay()];
+    const rep = sorted[0];
+    const last = sorted[sorted.length - 1];
+    const dowName = DOW_NAMES[new Date(rep.start_time).getDay()];
+
     rows.push({
       rep,
-      isSeries:    true,
+      isSeries: true,
       seriesStart: rep.start_time,
-      seriesEnd:   last.start_time,
+      seriesEnd: last.start_time,
       dowName,
-      count:       sorted.length,
+      count: sorted.length,
     });
   }
 
-  // Single-event rows
   for (const ev of singles) {
-    rows.push({ rep: ev, isSeries: false, seriesStart: ev.start_time, seriesEnd: ev.end_time, dowName: '', count: 1 });
+    rows.push({
+      rep: ev,
+      isSeries: false,
+      seriesStart: ev.start_time,
+      seriesEnd: ev.end_time,
+      dowName: '',
+      count: 1,
+    });
   }
 
-  // Sort display rows by their representative start_time
   rows.sort((a, b) => new Date(a.rep.start_time).getTime() - new Date(b.rep.start_time).getTime());
-
   return rows;
 }
 
@@ -986,11 +947,12 @@ export default function AdminCalendar() {
   const { session, loading: authLoading, user, signOut } = useAuth();
   const navigate = useNavigate();
 
-  const [events, setEvents]           = useState<CalendarEvent[]>([]);
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loadingEvents, setLoadingEvents] = useState(true);
-  const [fetchError, setFetchError]   = useState('');
-  const [modalOpen, setModalOpen]     = useState(false);
+  const [fetchError, setFetchError] = useState('');
+  const [modalOpen, setModalOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
+  const [editingSeriesEndDate, setEditingSeriesEndDate] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<CalendarEvent | null>(null);
 
   useEffect(() => {
@@ -1000,34 +962,50 @@ export default function AdminCalendar() {
   const loadEvents = useCallback(async () => {
     setLoadingEvents(true);
     setFetchError('');
+
     const { data, error } = await supabase
       .from('calendar_events')
       .select('*')
       .order('start_time', { ascending: true });
+
     if (error) {
       setFetchError(error.message);
     } else {
       setEvents((data as CalendarEvent[]) ?? []);
     }
+
     setLoadingEvents(false);
   }, []);
 
-  useEffect(() => { if (session) loadEvents(); }, [session, loadEvents]);
+  useEffect(() => {
+    if (session) loadEvents();
+  }, [session, loadEvents]);
 
   const togglePublish = async (ev: CalendarEvent) => {
     await supabase.from('calendar_events')
-      .update({ is_published: !ev.is_published }).eq('id', ev.id);
+      .update({ is_published: !ev.is_published })
+      .eq('id', ev.id);
     loadEvents();
   };
 
   const toggleCancel = async (ev: CalendarEvent) => {
     await supabase.from('calendar_events')
-      .update({ is_cancelled: !ev.is_cancelled }).eq('id', ev.id);
+      .update({ is_cancelled: !ev.is_cancelled })
+      .eq('id', ev.id);
     loadEvents();
   };
 
-  const openCreate = () => { setEditingEvent(null); setModalOpen(true); };
-  const openEdit   = (ev: CalendarEvent) => { setEditingEvent(ev); setModalOpen(true); };
+  const openCreate = () => {
+    setEditingEvent(null);
+    setEditingSeriesEndDate(null);
+    setModalOpen(true);
+  };
+
+  const openEdit = (ev: CalendarEvent, seriesEndDate?: string) => {
+    setEditingEvent(ev);
+    setEditingSeriesEndDate(seriesEndDate ?? null);
+    setModalOpen(true);
+  };
 
   if (authLoading) {
     return (
@@ -1041,8 +1019,6 @@ export default function AdminCalendar() {
 
   return (
     <div className="min-h-screen bg-gym-black" style={{ paddingTop: 80 }}>
-
-      {/* Header */}
       <div className="bg-gym-charcoal border-b border-gym-charcoal-light">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -1071,7 +1047,6 @@ export default function AdminCalendar() {
         </div>
       </div>
 
-      {/* Event list */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {loadingEvents ? (
           <div className="flex items-center justify-center py-20">
@@ -1105,17 +1080,17 @@ export default function AdminCalendar() {
         ) : (
           <div className="space-y-2">
             {buildDisplayRows(events).map(({ rep: ev, isSeries, seriesStart, seriesEnd, dowName, count }) => {
-              const color     = TYPE_COLOR[ev.event_type] ?? '#6B7280';
+              const color = TYPE_COLOR[ev.event_type] ?? '#6B7280';
               const typeLabel = EVENT_TYPE_OPTS.find(o => o.value === ev.event_type)?.label ?? ev.event_type;
-              const audLabel  = AUDIENCE_LABEL[ev.audience] ?? ev.audience;
-              const lvlLabel  = LEVEL_LABEL[ev.class_level] ?? ev.class_level;
+              const audLabel = AUDIENCE_LABEL[ev.audience] ?? ev.audience;
+              const lvlLabel = LEVEL_LABEL[ev.class_level] ?? ev.class_level;
+
               return (
                 <div
                   key={isSeries ? `series-${ev.series_id}` : ev.id}
                   className="bg-gym-charcoal border border-gym-charcoal-light flex flex-col sm:flex-row sm:items-center gap-3 px-4 py-4"
                   style={{ borderLeft: `3px solid ${color}` }}
                 >
-                  {/* Date / time block */}
                   <div className="shrink-0 min-w-[150px]">
                     {isSeries ? (
                       <>
@@ -1140,7 +1115,6 @@ export default function AdminCalendar() {
                     )}
                   </div>
 
-                  {/* Title + meta */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-display text-lg leading-tight uppercase text-white">
@@ -1174,7 +1148,6 @@ export default function AdminCalendar() {
                     </div>
                   </div>
 
-                  {/* Actions */}
                   <div className="flex items-center gap-1 shrink-0">
                     <button
                       onClick={() => togglePublish(ev)}
@@ -1191,7 +1164,7 @@ export default function AdminCalendar() {
                       {ev.is_cancelled ? <RotateCcw size={16} /> : <Ban size={16} />}
                     </button>
                     <button
-                      onClick={() => openEdit(ev)}
+                      onClick={() => openEdit(ev, isSeries ? seriesEnd : undefined)}
                       title="Edit"
                       className="p-2 text-gray-600 hover:text-white transition-colors"
                     >
@@ -1215,8 +1188,18 @@ export default function AdminCalendar() {
       {modalOpen && (
         <EventModal
           editing={editingEvent}
-          onClose={() => { setModalOpen(false); setEditingEvent(null); }}
-          onSaved={() => { setModalOpen(false); setEditingEvent(null); loadEvents(); }}
+          seriesEndDate={editingSeriesEndDate}
+          onClose={() => {
+            setModalOpen(false);
+            setEditingEvent(null);
+            setEditingSeriesEndDate(null);
+          }}
+          onSaved={() => {
+            setModalOpen(false);
+            setEditingEvent(null);
+            setEditingSeriesEndDate(null);
+            loadEvents();
+          }}
         />
       )}
 
@@ -1224,7 +1207,10 @@ export default function AdminCalendar() {
         <DeleteConfirm
           event={deleteTarget}
           onClose={() => setDeleteTarget(null)}
-          onDeleted={() => { setDeleteTarget(null); loadEvents(); }}
+          onDeleted={() => {
+            setDeleteTarget(null);
+            loadEvents();
+          }}
         />
       )}
     </div>
