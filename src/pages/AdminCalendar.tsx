@@ -602,31 +602,53 @@ const handleEdit = async () => {
             </div>
           )}
 
-          {/* Datetime fields — single event or edit */}
-          {(editing || form.repeat_type === 'none') && (
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className={labelCls}>Start *</label>
-                <input
-                  type="datetime-local"
-                  className={inputCls}
-                  required
-                  value={form.start_time}
-                  onChange={e => set('start_time', e.target.value)}
-                />
-              </div>
-              <div>
-                <label className={labelCls}>End *</label>
-                <input
-                  type="datetime-local"
-                  className={inputCls}
-                  required
-                  value={form.end_time}
-                  onChange={e => set('end_time', e.target.value)}
-                />
-              </div>
-            </div>
-          )}
+{/* Datetime fields — single event or edit */}
+{(editing || form.repeat_type === 'none') && (
+  <div className="grid grid-cols-2 gap-4">
+    <div>
+      <label className={labelCls}>Start *</label>
+      <input
+        type="datetime-local"
+        className={inputCls}
+        required
+        value={form.start_time}
+        onChange={e => set('start_time', e.target.value)}
+      />
+    </div>
+    <div>
+      <label className={labelCls}>End *</label>
+      <input
+        type="datetime-local"
+        className={inputCls}
+        required
+        value={form.end_time}
+        onChange={e => set('end_time', e.target.value)}
+      />
+    </div>
+  </div>
+)}
+
+{editing && hasSeries && (
+  <div className="bg-gym-black border border-gym-charcoal-light p-4">
+    <p className="font-heading text-[11px] uppercase tracking-widest text-gray-500 mb-3">
+      Series Range
+    </p>
+
+    <div>
+      <label className={labelCls}>Series End Date *</label>
+      <input
+        type="date"
+        className={inputCls}
+        required
+        value={form.recur_end_date}
+        onChange={e => set('recur_end_date', e.target.value)}
+      />
+      <p className="font-body text-xs text-gray-600 mt-1">
+        Extending this date creates new weekly rows. Shortening it removes rows after this date based on the selected save scope.
+      </p>
+    </div>
+  </div>
+)}
 
           {/* Weekly recurrence fields (create only) */}
           {!editing && form.repeat_type === 'weekly' && (
