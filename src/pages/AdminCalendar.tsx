@@ -23,12 +23,13 @@ const AUDIENCE_OPTS = [
 ];
 
 const LEVEL_OPTS = [
-  { value: 'all levels', label: 'All Levels' },
-  { value: 'wrestling',  label: 'Wrestling'  },
-  { value: 'gi',         label: 'Gi'         },
-  { value: 'no gi',      label: 'No Gi'      },
-  { value: 'mma',        label: 'MMA'        },
-  { value: 'open mat',   label: 'Open Mat'   },
+  { value: 'all levels',  label: 'All Levels'  },
+  { value: 'wrestling',   label: 'Wrestling'   },
+  { value: 'gi',          label: 'Gi'          },
+  { value: 'no gi',       label: 'No Gi'       },
+  { value: 'mma',         label: 'MMA'         },
+  { value: 'open mat',    label: 'Open Mat'    },
+  { value: 'kickboxing',  label: 'Kickboxing'  },
 ];
 
 const DAYS_OF_WEEK = [
@@ -117,6 +118,30 @@ function combineDateAndTime(date: Date, timeStr: string): string {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate(), hh, mm, 0, 0).toISOString();
 }
 
+/**
+ * Returns one Date per month from startDate through endDate (inclusive, YYYY-MM-DD strings)
+ * on the same day-of-month as startDate. If that day doesn't exist in a month (e.g. Feb 30),
+ * uses the last day of that month instead.
+ */
+function generateMonthlyDates(startDate: string, endDate: string): Date[] {
+  const [sy, sm, sd] = startDate.split('-').map(Number);
+  const [ey, em, ed] = endDate.split('-').map(Number);
+  const end = new Date(ey, em - 1, ed, 12);
+  const result: Date[] = [];
+  let year = sy;
+  let month = sm - 1; // 0-based
+  while (true) {
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const day = Math.min(sd, daysInMonth);
+    const cur = new Date(year, month, day, 12);
+    if (cur > end) break;
+    result.push(cur);
+    month++;
+    if (month > 11) { month = 0; year++; }
+  }
+  return result;
+}
+
 function dateOnlyLocal(iso: string): string {
   const d = new Date(iso);
   const pad = (n: number) => String(n).padStart(2, '0');
@@ -138,7 +163,7 @@ interface FormState {
   is_cancelled: boolean;
   start_time: string;
   end_time: string;
-  repeat_type: 'none' | 'weekly';
+  repeat_type: 'none' | 'weekly' | 'monthly';
   recur_start_date: string;
   recur_end_date: string;
   recur_day: string;
@@ -277,14 +302,14 @@ function EventModal({
       if (error) throw new Error(error.message);
     } else {
       const seriesId = crypto.randomUUID();
-      const dates = generateWeeklyDates(
-        form.recur_start_date,
-        form.recur_end_date,
-        parseInt(form.recur_day, 10),
-      );
+
+      const dates = form.repeat_type === 'monthly'
+        ? generateMonthlyDates(form.recur_start_date, form.recur_end_date)
+        : generateWeeklyDates(form.recur_start_date, form.recur_end_date, parseInt(form.recur_day, 10));
 
       if (dates.length === 0) {
-        throw new Error('No matching dates found. Verify your start date, end date, and day of week.');
+        const label = form.repeat_type === 'monthly' ? 'monthly' : 'weekly';
+        throw new Error(`No matching dates found. Verify your start date, end date, and ${label === 'weekly' ? 'day of week' : 'date range'}.`);
       }
 
       const rows = dates.map(date => ({
@@ -545,7 +570,7 @@ function EventModal({
             <div>
               <label className={labelCls}>Repeat</label>
               <div className="flex gap-6">
-                {(['none', 'weekly'] as const).map(rt => (
+                {(['none', 'weekly', 'monthly'] as const).map(rt => (
                   <label key={rt} className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="radio"
@@ -556,7 +581,7 @@ function EventModal({
                       className="accent-bee-yellow w-4 h-4"
                     />
                     <span className="font-heading text-xs uppercase tracking-widest text-gray-400">
-                      {rt === 'none' ? 'None' : 'Weekly'}
+                      {rt === 'none' ? 'None' : rt === 'weekly' ? 'Weekly' : 'Monthly'}
                     </span>
                   </label>
                 ))}
@@ -610,9 +635,11 @@ function EventModal({
             </div>
           )}
 
-          {!editing && form.repeat_type === 'weekly' && (
+          {!editing && (form.repeat_type === 'weekly' || form.repeat_type === 'monthly') && (
             <div className="space-y-4 bg-gym-black border border-gym-charcoal-light p-4">
-              <p className="font-heading text-[11px] uppercase tracking-widest text-gray-500">Weekly Schedule</p>
+              <p className="font-heading text-[11px] uppercase tracking-widest text-gray-500">
+                {form.repeat_type === 'monthly' ? 'Monthly Schedule' : 'Weekly Schedule'}
+              </p>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -637,19 +664,21 @@ function EventModal({
                 </div>
               </div>
 
-              <div>
-                <label className={labelCls}>Day of Week *</label>
-                <div className="relative">
-                  <select
-                    className={`${selCls} pr-8`}
-                    value={form.recur_day}
-                    onChange={e => set('recur_day', e.target.value)}
-                  >
-                    {DAYS_OF_WEEK.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
-                  </select>
-                  <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
+              {form.repeat_type === 'weekly' && (
+                <div>
+                  <label className={labelCls}>Day of Week *</label>
+                  <div className="relative">
+                    <select
+                      className={`${selCls} pr-8`}
+                      value={form.recur_day}
+                      onChange={e => set('recur_day', e.target.value)}
+                    >
+                      {DAYS_OF_WEEK.map(d => <option key={d.value} value={d.value}>{d.label}</option>)}
+                    </select>
+                    <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none" />
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -882,6 +911,7 @@ const LEVEL_LABEL: Record<string, string> = {
   'no gi': 'No Gi',
   mma: 'MMA',
   'open mat': 'Open Mat',
+  kickboxing: 'Kickboxing',
 };
 
 interface DisplayRow {
