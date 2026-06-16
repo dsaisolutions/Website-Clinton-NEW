@@ -202,6 +202,7 @@ export default function Home() {
                         src={bearImg}
                         alt="Killer Bees Clinton mascot"
                         className="w-full h-auto block"
+                        style={{ mixBlendMode: 'multiply' }}
                       />
                       <div
                         className="absolute bottom-0 left-0 right-0 pointer-events-none z-10"
