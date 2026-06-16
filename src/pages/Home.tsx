@@ -2,7 +2,8 @@ import { MapPin } from 'lucide-react';
 import killerBeesLogo from '../assets/313420056_580715700507484_3157916469398511501_n.jpg';
 import Button from '../components/Button';
 import CTASection from '../components/CTASection';
-import bearImg from '../assets/new_logo.jpg';
+
+const bearImg = '/new_logo.png';
 
 const disciplines = [
   {
@@ -202,7 +203,6 @@ export default function Home() {
                         src={bearImg}
                         alt="Killer Bees Clinton mascot"
                         className="w-full h-auto block"
-                        style={{ mixBlendMode: 'multiply' }}
                       />
                       <div
                         className="absolute bottom-0 left-0 right-0 pointer-events-none z-10"
